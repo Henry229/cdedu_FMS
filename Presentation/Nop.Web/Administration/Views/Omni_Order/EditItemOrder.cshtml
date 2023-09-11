@@ -1,0 +1,261 @@
+﻿@model Nop.Admin.Models.Omni_Order.OrderItemModel
+@{
+    var gridPageSize = EngineContext.Current.Resolve<Nop.Core.Domain.Common.AdminAreaSettings>().GridPageSize;
+
+    //page title
+    ViewBag.Title = T("Admin.Omni_Order.OrderItem").Text;
+}
+@using (Html.BeginForm())
+{
+    <div class="section-header">
+        <div class="title">
+            <img src="@Url.Content("~/Administration/Content/images/ico-sales.png")" alt="" />
+            @T("Admin.Omni_Order.OrderItem")
+            @Html.ActionLink("(" + T("Admin.Omni_Order.OrderList.BackToList") + ")", "OrderList")
+        </div>
+    </div>
+        <table width="100%">
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.Order_Id):
+            </td>
+            <td class="adminData">
+                @Html.TextBoxFor(model => model.Order_Id, new { @readonly = "readonly" })
+                &nbsp;&nbsp;<input type="button" id="order-selected" class="k-button" value="@T("Admin.Common.Order.Selected")" />
+            </td>
+        </tr>
+        <tr>
+            <td class="adminTitle">
+                @Html.Label("(Starting)Unit");
+            </td>
+            <td class="adminData">
+                @Html.TextBoxFor(model => model.Week, new { @readonly = "readonly" })
+            </td>
+        </tr>
+    </table>
+    <p>
+    </p>
+    <table class="adminContent">
+        <tr>
+            <td>
+                <div id="grid"></div>
+
+                <script>
+                    $(document).ready(function () {
+                        $("#grid").kendoGrid({
+                            dataSource: {
+                                type: "json",
+                                transport: {
+                                    read: {
+                                        url: "@Html.Raw(Url.Action("GetItemOrderList", "Omni_Order"))",
+                                        type: "POST",
+                                        dataType: "json"
+                                    },
+                                    create: {
+                                        url: "@Html.Raw(Url.Action("ItemOrderInsert", "Omni_Order"))",
+                                        type: "POST",
+                                        dataType: "json"
+                                    },
+                                    update: {
+                                        url:"@Html.Raw(Url.Action("ItemOrderUpdate", "Omni_Order"))",
+                                        type: "POST",
+                                        dataType: "json"
+                                    },
+                                    destroy: {
+                                        url: "@Html.Raw(Url.Action("ItemOrderDelete", "Omni_Order"))",
+                                        type: "POST",
+                                        dataType: "json"
+                                    },
+                                    parameterMap: function(data, operation) {
+                                        if (operation != "read") {
+                                            return data;
+                                        } else {
+                                            return {
+                                                Order_Id:  $('#@Html.FieldIdFor(model => model.Order_Id)').val()
+                                            };
+                                        }
+                                    }
+                                },
+                                autoSync:false,
+                                schema: {
+                                    data: "Data",
+                                    total: "Total",
+                                    errors: "Errors",
+                                    model: {
+                                        id: "Id",
+                                        fields: {
+                                            Order_Id : { editable: false, type: "number" ,defaultValue : "@Model.Order_Id"  },
+                                            Seq : { editable: false, type: "number" },
+                                            ItemCode : { editable: true, type: "string" },
+                                            Qty : { editable: true, type: "number" },
+                                            Remarks : { editable: true, type: "string" },
+                                            Id: { editable: false, type: "number" }
+                                        }
+                                    }
+                                },
+                                requestEnd: function (e) {
+                                    if (e.type == "create" || e.type == "update") {
+                                        this.read();
+                                    }
+                                },
+                                error: function(e) {
+                                    display_kendoui_grid_error(e);
+                                    // Cancel the changes
+                                    this.cancelChanges();
+                                },
+                                pageSize: @(gridPageSize),
+                                serverPaging: true,
+                                serverFiltering: false,
+                                serverSorting: false
+                            },
+                            resizable : true,
+                            pageable: {
+                                refresh: true
+                            },
+                            @if ( Model.is_Editable )
+                            { 
+                               <text> toolbar: ["create"], </text>
+                            } 
+                            editable: {
+                                confirmation: false,
+                                mode: "inline"
+                            },
+                            scrollable: false,
+                            columns: [{
+                                field: "Order_Id",
+                                title: "@T("Admin.Omni_Backoffice.Order_D.Fields.Order_Id")",
+                                
+                                hidden:true
+                            }, {
+                                field: "Seq",
+                                title: "@T("Admin.Omni_Backoffice.Order_D.Fields.Seq")",
+                                hidden:true
+                            }, {
+                                field: "ItemCode",
+                                title: "@T("Admin.Omni_Backoffice.Order_D.Fields.ItemCode")",
+                                editor : itemDropDownEditor,
+                                template: '#=getItemName(ItemCode) #',
+                                width: 200
+                            }, {
+                                field: "Price",
+                                title: "@T("Admin.Omni_Backoffice.Order_D.Fields.Price")",
+                                template: '#=getItemPrice(ItemCode) #',
+                                attributes: { style: "text-align:right;" },
+                                width: 200
+                            }, {
+                                field: "Qty",
+                                title: "@T("Admin.Omni_Backoffice.Order_D.Fields.Qty")",
+                                width: 100
+                            }, {
+                                field: "Remarks",
+                                title: "@T("Admin.Omni_Backoffice.Order_D.Fields.Remarks")",
+                                width: 200
+                            }, {
+                                field: "Id",
+                                title: "@T("Admin.Omni_Backoffice.Order_D.Fields.Id")",
+                                hidden : true
+                            }, 
+                            @if ( Model.is_Editable )
+                            { <text>
+                            {
+
+                                command: [{
+                                    name: "edit",
+                                    text: "@T("Admin.Common.Edit")",
+                                }, {
+                                    name: "destroy",
+                                    text: "@T("Admin.Common.Delete")"
+                                }],
+                                width: 200,
+                                filterable:false
+                            }</text>
+                            }
+                            
+                            ]
+                        });
+                    });
+                </script>
+
+                <script type="text/javascript">
+
+                    $(document).ready(function () {
+
+                        $('#btnSearch').click(function () {
+                            var grid = $('#grid').data('kendoGrid');
+                            grid.dataSource.page(1); //new search. Set page size to 1
+                            grid.dataSource.read();
+                            return false;
+                        });
+
+
+                        $('#order-selected').click(function (e) {
+                            e.preventDefault();
+                            //redirect to required URL
+                            var selectedIds = $('#@Html.FieldIdFor(model => model.Order_Id)').val();
+                            setLocation('@(Url.Action("OrderOrder", "Omni_Order"))?selectedIds=' + selectedIds);
+                            return false;
+                        });
+
+                    });
+
+
+
+
+
+                    var allItemList = [
+
+        @for (int i = 0; i < Model.AvailableItems.Count; i++)
+                    {
+                        var item = Model.AvailableItems[i];
+                        <text> { Code: "@item.Value", Name: "@item.Text" } </text>
+                        if (i != Model.AvailableItems.Count - 1)
+                        { <text>,</text> }
+                    }
+                    ];
+
+                    function itemDropDownEditor(container, options) {
+                        $('<input required data-text-field="Name" data-value-field="Code" data-bind="value:'+options.field+'"/>')
+                            .appendTo(container)
+                            .kendoDropDownList({
+                                autoBind: false,
+                                dataSource: allItemList
+                            });
+                    }
+                    function getItemName(itemcode)
+                    {
+                        for ( var i = 0; i < allItemList.length; i++)
+                        {
+                            if ( allItemList[i].Code == itemcode)
+                                return allItemList[i].Name;
+                        }
+
+                        return itemcode;
+                    }
+
+
+                    var AllItemPrices = [
+
+       @for (int i = 0; i < Model.AvailableItemPrices.Count; i++)
+                    {
+                        var item = Model.AvailableItemPrices[i];
+                        <text> { Code: "@item.Value", Name: "@item.Text" } </text>
+                        if (i != Model.AvailableItems.Count - 1)
+                        { <text>,</text> }
+                        }
+                    ];
+                        function getItemPrice(itemcode)
+                        {
+                            for ( var i = 0; i < AllItemPrices.length; i++)
+                            {
+                                if ( AllItemPrices[i].Code == itemcode)
+                                    return AllItemPrices[i].Name;
+                            }
+
+                            return itemcode;
+                        }
+
+</script>
+            </td>
+        </tr>
+    </table>
+}

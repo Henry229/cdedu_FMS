@@ -1,0 +1,58 @@
+﻿<table class="adminContent">
+    <tr>
+        <td>
+
+            <div id="shortage-item-report-grid"></div>
+            <script>
+                $(document).ready(function () {
+                    $("#shortage-item-report-grid").kendoGrid({
+                        dataSource: {
+                            type: "json",
+                            transport: {
+                                read: {
+                                    url: "@Html.Raw(Url.Action("ShortageItemsReportList", "Omni_Order"))",
+                                    type: "POST",
+                                    dataType: "json"
+                                }
+                            },
+                            schema: {
+                                data: "Data",
+                                total: "Total",
+                                errors: "Errors"
+                            },
+                            error: function(e) {
+                                display_kendoui_grid_error(e);
+                                // Cancel the changes
+                                this.cancelChanges();
+                            },
+                            serverPaging: true,
+                            serverFiltering: true,
+                            serverSorting: true
+                        },
+                        pageable: {
+                            refresh: true,
+                            numeric: false,
+                            previousNext: false,
+                            info: false
+                        },
+                        editable: {
+                            confirmation: false,
+                            mode: "inline"
+                        },
+                        scrollable: false,
+                        columns: [{
+                            field: "ItemCode",
+                            title: "@T("Item Code")"
+                        }, {
+                            field: "ItemName",
+                            title: "@T("Item Name")"
+                        }, {
+                            field: "Qty",
+                            title: "@T("Current Qty")"
+                        }]
+                    });
+                });
+            </script>
+        </td>
+    </tr>
+</table>

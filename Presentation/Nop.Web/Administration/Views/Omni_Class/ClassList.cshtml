@@ -1,0 +1,494 @@
+﻿@model Nop.Admin.Models.Omni_Class.ClassInfoModel
+@{
+    var gridPageSize = 1024;
+
+    //page title
+    ViewBag.Title = T("Admin.Class").Text;
+}
+@using (Html.BeginForm())
+{
+    <div class="section-header">
+        <div class="title">
+            <img src="@Url.Content("~/Administration/Content/images/ico-sales.png")" alt="" />
+            @T("Admin.Class")
+        </div>
+        @if (Model.editable)
+        { <text>
+        <div class="options">
+            <a href="@Url.Action("CreateClass")" class="k-button">@T("Admin.Common.AddNew")</a>
+            <input type="button" id="schedule-selected" class="k-button" value="@T("Admin.Omni_Class.Schedule.Selected")" />
+        </div>
+        </text> }
+    </div>
+    <table width="100%">
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.Branch):
+            </td>
+            <td class="adminData">
+                @if (Model.is_Admin)
+                {
+                    @Html.DropDownListFor(model => model.Branch, Model.AvailableBranchs, new { @class = "adminInput" })
+                }
+                else
+                {
+                    @Html.DropDownListFor(model => model.Branch, Model.AvailableBranchs, new { @class = "adminInput", @disabled = "disabled" })
+                }
+            </td>
+        </tr>
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.Year):
+            </td>
+            <td class="adminData">
+                @Html.DropDownListFor(model => model.Year, Model.AvailableYear, new { @class = "adminInput" })
+            </td>
+        </tr>
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.Term):
+            </td>
+            <td class="adminData">
+                @Html.DropDownListFor(model => model.Term, Model.AvailableTerms, new { @class = "adminInput" })
+            </td>
+        </tr>
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.DayofWeek):
+            </td>
+            <td class="adminData">
+                @Html.DropDownListFor(model => model.DayofWeek, Model.AvailableDayofWeek, new { @class = "adminInput" })
+            </td>
+        </tr>
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.Grade):
+            </td>
+            <td class="adminData">
+                @Html.DropDownListFor(model => model.Grade, Model.AvailableGrade, new { @class = "adminInput" })
+            </td>
+        </tr>
+        
+        <tr>
+            <td colspan="2">
+                <input type="button" id="btnSearch" class="k-button" value="@T("Admin.Common.Search")" />
+            </td>
+        </tr>
+    </table>
+    <p>
+    </p>
+    <table class="adminContent">
+        <tr>
+            <td>
+                <div id="classes-grid"></div>
+
+                <script>
+                    $(document).ready(function () {
+                        $("#classes-grid").kendoGrid({
+                           // timezone: "Etc/UTC",
+                            dataSource: {
+                                type: "json",
+                                transport: {
+                                    read: {
+                                        url: "@Html.Raw(Url.Action("GetClassList", "Omni_Class"))",
+                                        type: "POST",
+                                        dataType: "json"
+                                    },
+                                    parameterMap: function(data, operation) {
+                                        if (operation == "read") {
+ 
+                                            return {
+                                                Year:  $('#@Html.FieldIdFor(model => model.Year)').val(),
+                                                Term:  $('#@Html.FieldIdFor(model => model.Term)').val(),
+                                                Branch: $('#@Html.FieldIdFor(model => model.Branch)').val(),
+                                                DayofWeek:  $('#@Html.FieldIdFor(model => model.DayofWeek)').val(),
+                                                Grade: $('#@Html.FieldIdFor(model => model.Grade)').val()
+                                            };
+                                        }
+                                    }
+                                },
+                                autoSync:false,
+                                schema: {
+                                    data: "Data",
+                                    total: "Total",
+                                    errors: "Errors"
+                                },
+                                error: function(e) {
+                                    display_kendoui_grid_error(e);
+                                    // Cancel the changes
+                                    this.cancelChanges();
+                                },
+                                pageSize: 1024,
+                                serverPaging: false,
+                                serverFiltering: false,
+                                serverSorting: false
+                            },
+                            pageable: false,
+                            editable: {
+                                confirmation: false,
+                                mode: "inline"
+                            },
+                            //filterable: {
+                            //    extra: false,
+                            //    operators: {
+                            //        string: {
+                            //            contains: "Contains",
+                            //            eq: "Is equal to"
+                            //        }
+                            //    }
+                            //},
+                            scrollable: false,
+                            selectable: "row",
+                            columns: [
+                                {
+                                    field: "Id",
+                                    headerTemplate: "<input id='mastercheckbox' type='checkbox'/>",
+                                    headerAttributes: { style: "text-align:center" },
+                                    attributes: { style: "text-align:center" },
+                                    template: "<input type='checkbox' value='#=Id#' class='checkboxGroups'/>",
+                                    width: 50
+                                },
+
+                                {
+                                    field: "Course_Id",
+                                    title: "@T("Admin.Omni_Backoffice.ClassList.Fields.Course")",
+                                template: '#=getCourseName(Course_Id) #',
+                        hidden : true,
+                        width: 300
+                                }, {
+                                    field: "Name",
+                                    title: "@T("Admin.Omni_Backoffice.ClassList.Fields.Name")",
+                                width: 200
+                                
+
+                                @if (Model.editable)
+                            { 
+                                    <text>
+                                }, {
+                                    field: "Id",
+                                    title: "@T("Admin.Common.Edit")",
+                                    width: 100,
+                                    template: '<a href="EditClass/#=Id#">@T("Admin.Common.Edit")</a>'
+                                    </text>
+
+                    }
+
+
+                                },  {
+                                field: "Year",
+                                title: "@T("Admin.Omni_Backoffice.ClassList.Fields.Year")",
+                                    width: 100, hidden: true,
+                            }, {
+                                field: "Term",
+                                title: "@T("Admin.Omni_Backoffice.ClassList.Fields.Term")",
+                                template: '#=getTermName(Term) #',
+                                width: 100, hidden: true,
+                            }, {
+                                field: "Grade",
+                                title: "@T("Admin.Omni_Backoffice.ClassList.Fields.Grade")",
+                                template: '#=getGradeName(Grade) #',
+                                width:100
+                            },  {
+                                field: "Branch",
+                                title: "@T("Admin.Omni_Backoffice.ClassList.Fields.Branch")",
+                                template: '#=getBranchName(Branch) #',
+                                width: 100, hidden: true,
+
+                            },{
+                                field: "FirstName",
+                                title: "@T("Admin.Omni_Backoffice.ClassList.Fields.Teacher")",
+                                width: 100
+                            }, {
+                                field: "DayofWeek",
+                                title: "@T("Admin.Omni_Backoffice.ClassList.Fields.Day of Week")",
+                                template: '#=getDayofWeekName(DayofWeek) #',
+                                width: 100
+                            }, {
+                                field: "StartTime",
+                                title: "@T("Admin.Omni_Backoffice.ClassList.Fields.StartTime")",
+                                type: "date",
+                                width: 200,
+                                format: "{0: hh:mm tt}",
+                               
+                            }, {
+                                field: "EndTime",
+                                title: "@T("Admin.Omni_Backoffice.ClassList.Fields.EndTime")",
+                                type: "date",
+                                width: 200,
+                                format: "{0: hh:mm tt}",
+                               
+                            }, {
+                                field: "Classroom_Id",
+                                title: "@T("Admin.Omni_Backoffice.ClassList.Fields.ClassRoom")",
+                                template: '#=getClassRoomName(Classroom_Id) #',
+                                width: 100
+                                
+                             }
+                            ]
+                        });
+                    });
+
+                   
+                </script>
+
+                <script type="text/javascript">
+                    var selectedIds = [];
+
+    $(document).ready(function () {
+
+        $('#btnSearch').click(function () {
+            var grid = $('#classes-grid').data('kendoGrid');
+            grid.dataSource.page(1); //new search. Set page size to 1
+            grid.dataSource.read();
+            return false;
+        });
+
+
+
+        $('#schedule-selected').click(function (e) {
+            e.preventDefault();
+            //redirect to required URL
+            setLocation('@(Url.Action("MakeCheckedSchedule", "Omni_Class"))?selectedIds=' + selectedIds.join(",") );
+            return false;
+        });
+
+
+
+        $('#mastercheckbox').click(function () {
+            $('.checkboxGroups').attr('checked', $(this).is(':checked')).change();
+        });
+
+        //wire up checkboxes.
+        $('#grid').on('change', 'input[type=checkbox][id!=mastercheckbox]', function (e) {
+            var $check = $(this);
+            if ($check.is(":checked") == true) {
+                var checked = jQuery.inArray($check.val(), selectedIds);
+                if (checked == -1) {
+                    //add id to selectedIds.
+                    selectedIds.push($check.val());
+                }
+            }
+            else {
+                var checked = jQuery.inArray($check.val(), selectedIds);
+                if (checked > -1) {
+                    //remove id from selectedIds.
+                    selectedIds = $.grep(selectedIds, function (item, index) {
+                        return item != $check.val();
+                    });
+                }
+            }
+            updateMasterCheckbox();
+        });
+
+      
+    });
+
+
+    function updateMasterCheckbox() {
+        var numChkBoxes = $('#grid input[type=checkbox][id!=mastercheckbox]').length;
+        var numChkBoxesChecked = $('#grid input[type=checkbox][checked][id!=mastercheckbox]').length;
+        $('#mastercheckbox').attr('checked', numChkBoxes == numChkBoxesChecked && numChkBoxes > 0);
+    }
+
+    @*function getmakeschedule(pid)
+    {
+        if (pid != null)
+        {
+            var url = "/Admin/Omni_Class/MakeSchedules";
+            // var pid = $('#@Html.FieldIdFor(model => model.Id)').val();
+            
+            $.post(url, { id: pid }, function () {
+                alert("SUCCESS")
+                //document.getElementById('InvoiceNo').value = data;
+
+                false;
+            });
+        }
+    }*@
+
+    var allTermList = [
+
+        @for (int i = 0; i < Model.AvailableTerms.Count; i++)
+        {
+            var term = Model.AvailableTerms[i];
+            <text>
+            {
+                Code: "@term.Value",
+                Name: "@term.Text"
+            }
+            </text>
+                if (i != Model.AvailableTerms.Count - 1)
+                {
+                    <text>,</text>
+                }
+         }
+    ];
+
+
+    function getTermName(term)
+    {
+        for ( var i = 0; i < allTermList.length; i++)
+        {
+            if ( allTermList[i].Code == term)
+                return allTermList[i].Name;
+        }
+
+        return term;
+    }
+
+    var allGradeList = [
+
+@for (int i = 0; i < Model.AvailableGrade.Count; i++)
+    {
+        var grade = Model.AvailableGrade[i];
+        <text>
+        {
+            Code: "@grade.Value",
+            Name: "@grade.Text"
+        }
+        </text>
+        if (i != Model.AvailableGrade.Count - 1)
+        {
+            <text>,</text>
+        }
+    }
+    ];
+
+
+    function getGradeName(grade)
+    {
+        for ( var i = 0; i < allGradeList.length; i++)
+        {
+            if ( allGradeList[i].Code == grade)
+                return allGradeList[i].Name;
+        }
+
+        return grade;
+    }
+
+    var allDayofWeekList = [
+
+        @for (int i = 0; i < Model.AvailableDayofWeek.Count; i++)
+        {
+            var dayofweek = Model.AvailableDayofWeek[i];
+            <text>
+            {
+                Code: "@dayofweek.Value",
+                Name: "@dayofweek.Text"
+            }
+            </text>
+            if (i != Model.AvailableDayofWeek.Count - 1)
+            {
+                <text>,</text>
+            }
+        }
+    ];
+
+    function getDayofWeekName(dayofweek)
+    {
+        for ( var i = 0; i < allDayofWeekList.length; i++)
+        {
+            if ( allDayofWeekList[i].Code == dayofweek)
+                return allDayofWeekList[i].Name;
+        }
+
+        return dayofweek;
+    }
+
+    var allClassroomList = [
+
+    @for (int i = 0; i < Model.AvailableClassRoom.Count; i++)
+    {
+        var classroom = Model.AvailableClassRoom[i];
+        <text>
+        {
+            Code: "@classroom.Value",
+            Name: "@classroom.Text"
+        }
+        </text>
+        if (i != Model.AvailableClassRoom.Count - 1)
+        {
+            <text>,</text>
+        }
+    }
+    ];
+
+
+     function getClassRoomName(Classroom_Id)
+     {
+        for ( var i = 0; i < allClassroomList.length; i++)
+        {
+            if ( allClassroomList[i].Code == Classroom_Id)
+                return allClassroomList[i].Name;
+        }
+        return Course_Id;
+     }
+
+     var allCourseList = [
+
+     @for (int i = 0; i < Model.AvailableCourse.Count; i++)
+     {
+         var course = Model.AvailableCourse[i];
+        <text>
+        {
+            Code: "@course.Value",
+            Name: "@course.Text"
+        }
+        </text>
+         if (i != Model.AvailableCourse.Count - 1)
+        {
+            <text>,</text>
+        }
+      }
+      ];
+
+
+       function getCourseName(Course_Id)
+       {
+            for ( var i = 0; i < allCourseList.length; i++)
+            {
+                if ( allCourseList[i].Code == Course_Id)
+                    return allCourseList[i].Name;
+            }
+
+            return Course_Id;
+       }
+
+       var allBranchList = [
+
+                  @for (int i = 0; i < Model.AvailableBranchs.Count; i++)
+       {
+           var branch = Model.AvailableBranchs[i];
+           <text> { Code: "@branch.Value", Name: "@branch.Text" }  </text>
+           if (i != Model.AvailableBranchs.Count - 1)
+           {
+               <text>,</text>
+           }
+       }
+       ];
+
+       function SetBranchDropDownEditor(container, options) {
+           $('<input required data-text-field="Name" data-value-field="Code" data-bind="value:'+options.field+'"/>')
+               .appendTo(container)
+               .kendoDropDownList({
+                   autoBind: false,
+                   dataSource: allBranchList
+               });
+       }
+       function getBranchName(branch)
+       {
+           for ( var i = 0; i < allBranchList.length; i++)
+           {
+               if ( allBranchList[i].Code == branch)
+                   return allBranchList[i].Name;
+           }
+
+           return branch;
+       }
+
+
+                </script>
+            </td>
+        </tr>
+    </table>
+}

@@ -1,0 +1,83 @@
+﻿<table class="adminContent">
+    <tr>
+        <td>
+
+            <div id="incomplete-printing-report-grid"></div>
+            <script>
+                $(document).ready(function () {
+                    $("#incomplete-printing-report-grid").kendoGrid({
+                        dataSource: {
+                            type: "json",
+                            transport: {
+                                read: {
+                                    url: "@Html.Raw(Url.Action("IncompletePrintingList", "Omni_Printing"))",
+                                    type: "POST",
+                                    dataType: "json"
+                                }
+                            },
+                            schema: {
+                                data: "Data",
+                                total: "Total",
+                                errors: "Errors"
+                            },
+                            error: function(e) {
+                                display_kendoui_grid_error(e);
+                                // Cancel the changes
+                                this.cancelChanges();
+                            },
+                            serverPaging: true,
+                            serverFiltering: true,
+                            serverSorting: true
+                        },
+                        pageable: {
+                            refresh: true,
+                            numeric: false,
+                            previousNext: false,
+                            info: false
+                        },
+                        editable: {
+                            confirmation: false,
+                            mode: "inline"
+                        },
+                        scrollable: false,
+                        columns: [{
+                            field: "Id",
+                            title: "@T("Id")"
+                        }, {
+                            field: "User_Id",
+                            title: "User"
+                        }, {
+                            field: "Title",
+                            title: "Title"
+                        }, {
+                            field: "ReqDate",
+                            title: "Req Date",
+                            type: "date",
+                            template: "#= kendo.toString(ReqDate, 'dd/MM/yyyy') #"
+                        }, {
+                            field: "DueDate",
+                            title: "Due Date",
+                            type: "date",
+                            template: "#= kendo.toString(DueDate, 'dd/MM/yyyy') #"
+                        }, {
+                            field: "Status",
+                            title: "Status"
+                        }, {
+                            field: "edit",
+                            title: "Detail",
+                            width: 80,
+                            template: '<a href="Omni_Printing/EditRequest/#=Id#">Detail</a>',
+                            editor: "<label></label>",
+                            editable: false,
+                            filterable: false
+                        }]
+                    });
+                });
+
+
+
+
+            </script>
+        </td>
+    </tr>
+</table>

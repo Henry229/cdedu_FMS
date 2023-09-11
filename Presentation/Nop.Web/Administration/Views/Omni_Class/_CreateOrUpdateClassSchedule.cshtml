@@ -1,0 +1,550 @@
+﻿@model Nop.Admin.Models.Omni_Class.ClassScheduleModel
+@using Nop.Core.Domain.Omni_Backoffice;
+@Html.ValidationSummary(false)
+@Html.HiddenFor(model => model.Id)
+
+<label><h2>@Model.Class_Name</h2></label>
+
+<div id="classschedule-edit">
+    <ul>
+        <li @Html.RenderSelectedTabIndex(0, GetSelectedTabIndex())>
+            @T("Admin.ClassSchedule.RollCall")
+        </li>
+        <li @Html.RenderSelectedTabIndex(1, GetSelectedTabIndex())>
+            @T("Admin.ClassSchedule.ScheduleInfo")
+        </li>
+
+        <li @Html.RenderSelectedTabIndex(2, GetSelectedTabIndex())>
+            @T("Admin.ClassSchedule.Teacher")
+        </li>
+
+    </ul>
+    <div>
+        @TabRollCall()
+    </div>
+    <div>
+        @TabInfo()
+    </div>
+    <div>
+        @TabScheduleTeacher()
+    </div>
+
+
+
+</div>
+<script>
+    $(document).ready(function() {
+        $("#classschedule-edit").kendoTabStrip({
+            animation:  {
+                open: {
+                    effects: "fadeIn"
+                }
+            },
+            select: tabstrip_on_tab_select
+        });
+    });
+</script>
+
+<script type="text/javascript">
+
+
+    $(document).ready(function () {
+
+        $('#btnSearch').click(function () {
+            var grid = $('#classschedule-edit').data('kendoGrid');
+            grid.dataSource.page(1); //new search. Set page size to 1
+            grid.dataSource.read();
+            return false;
+        });
+
+        ///*  popup start  */
+
+        //var window = $("#window_classroompopup");
+
+        //if (!window.data("kendoWindow")) {
+        //    window.kendoWindow({
+        //        width: "500px",
+        //        actions: ["Close"],
+        //        title: "Classroom",
+        //        visible: false,
+        //        close: function () {
+                    
+        //            var room_Id = document.getElementById('Classroom_Id').value
+        //            var branch_Id = document.getElementById('Branch').value
+        //            if ( room_Id != "")
+        //            {
+        //                document.getElementById('Classroom_Id').value=room_Id;
+        //                //document.getElementById('Branch').value=branch_Id;
+
+        //                setClassroomName();
+        //            }
+        //            return false;
+        //        }
+               
+        //    });
+
+
+        //}
+
+        //$("#window_classroompopup").data("kendoWindow").close();
+
+        ///* popup end */
+    });
+
+    //function setClassroomName(){
+    //    var roomId = document.getElementById('Classroom_Id').value;
+    //    var branchId = document.getElementById('Branch').value;
+    //    if ( roomId != "")
+    //    {
+    //        //alert(getClassroomName(roomId));
+    //        $("#Classroom_name").text(getClassroomName( roomId ));
+    //        $("#Branch_name").text(getBranchName( branchId ));
+           
+    //    }
+    //}
+
+    //function classroom_popup() {
+    //    $("#window_classroompopup").data("kendoWindow").open();
+       
+    //}
+
+    var allClassroomList = [
+
+        @for (int i = 0; i < Model.AvailableClassRoom.Count; i++)
+    {
+        var item = Model.AvailableClassRoom[i];
+        <text> { Code: "@item.Value", Name: "@item.Text" } </text>
+        if (i != Model.AvailableClassRoom.Count - 1)
+        { <text>,</text> }
+        }
+    ];
+
+    
+                        
+  
+    var allTeacherList = [
+
+                    @for (int i = 0; i < Model.AvailableTeacher.Count; i++)
+    {
+        var teacher = Model.AvailableTeacher[i];
+        <text> { Code: "@teacher.Value", Name: "@teacher.Text" }  </text>
+        if (i != Model.AvailableTeacher.Count - 1)
+        {
+            <text>,</text>
+        }
+    }
+    ];
+
+    function SetTeacherDropDownEditor(container, options) {
+        $('<input required data-text-field="Name" data-value-field="Code" data-bind="value:'+options.field+'"/>')
+            .appendTo(container)
+            .kendoDropDownList({
+                autoBind: false,
+                dataSource: allTeacherList
+            });
+    }
+    function getTeacherName(teacher)
+    {
+        for ( var i = 0; i < allTeacherList.length; i++)
+        {
+            if ( allTeacherList[i].Code == teacher)
+                return allTeacherList[i].Name;
+        }
+
+        return teacher;
+    }
+</script>
+
+
+@*@{
+    //custom tabs
+    var eventMessage = new AdminTabStripCreated(this.Html, "class-edit");
+    EngineContext.Current.Resolve<IEventPublisher>().Publish(eventMessage);
+    foreach (var eventBlock in eventMessage.BlocksToRender)
+    {
+    @eventBlock
+    }
+    }*@
+
+
+
+    @*save selected tab index*@
+    <input type="hidden" id="selected-tab-index" name="selected-tab-index" value="@(GetSelectedTabIndex())">
+
+    @helper TabInfo()
+    {
+    <script type="text/javascript">
+        $(document).ready(function () {
+
+            //  $("#@Html.FieldIdFor(model => model.Id)").change(toggleItemCategory);
+
+        });
+
+    </script>
+        
+    <table class="adminContent">
+       
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.Classroom_Id):
+            </td>
+            <td class="adminData">
+                @Html.DropDownList("Classroom_Id", Model.AvailableClassRoom)
+            </td>
+        </tr>
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.Class_Date):
+            </td>
+            <td class="adminData">
+                @Html.EditorFor(model => model.Class_Date)
+            </td>
+        </tr>
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.Class_StartTime):
+            </td>
+            <td class="adminData">
+                <script>
+                    $(document).ready(function() {
+                        //kendo.culture("EN-au");
+                        // create TimePicker from input HTML element
+                        $("#Class_StartTime").kendoTimePicker(
+                            { //format: "tt h:mm",
+                                max: new Date(2000, 0, 1, 22, 0, 0), //date part is ignored
+                                min: new Date(2000, 0, 1, 8, 0, 0), //date part is ignored
+                                interval: 15
+                            });
+
+                    });
+                </script>
+
+                @Html.EditorFor(model => model.Class_StartTime)
+            </td>
+        </tr>
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.Class_EndTime):
+            </td>
+            <td class="adminData">
+                <script>
+                    $(document).ready(function() {
+                        // create TimePicker from input HTML element
+                        $("#Class_EndTime").kendoTimePicker({
+                            //format: "tt h:mm",
+                            max: new Date(2000, 0, 1, 22, 0, 0), //date part is ignored
+                            min: new Date(2000, 0, 1, 8, 0, 0), //date part is ignored
+                            interval: 15
+                        });
+
+                    });
+                </script>
+
+                @Html.EditorFor(model => model.Class_EndTime)
+            </td>
+        </tr>
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.Remarks):
+            </td>
+            <td class="adminData">
+                @Html.EditorFor(model => model.Remarks)
+            </td>
+        </tr>
+ 
+        <tr>
+            <td class="adminTitle">
+                @*@Html.NopLabelFor(model => model.Class_Id):*@
+            </td>
+            <td class="adminData">
+                @Html.HiddenFor(model => model.Class_Id)
+            </td>
+        </tr>
+
+
+</table>
+    }
+
+    @helper TabScheduleTeacher()  // Schedule Teacher Tab
+    {
+
+    var gridPageSize = EngineContext.Current.Resolve<Nop.Core.Domain.Common.AdminAreaSettings>().GridPageSize;
+
+        <div id="scheduleteacher-grid"></div>
+
+
+   <script>
+    kendo.culture("en-AU");
+    $(document).ready(function () {
+        $("#scheduleteacher-grid").kendoGrid({
+            dataSource: {
+                type: "json",
+                transport: {
+                    read: {
+                        url: "@Html.Raw(Url.Action("GetClassScheduleTeacherList", "Omni_Class", new { Class_D_Id = Model.Id }))",
+                        type: "POST",
+                        dataType: "json"
+                    },
+                    create: {
+                        url: "@Html.Raw(Url.Action("ClassScheduleTeacherInsert", "Omni_Class"))",
+                        type: "POST",
+                        dataType: "json"
+                    },
+                    update: {
+                        url:"@Html.Raw(Url.Action("ClassScheduleTeacherUpdate", "Omni_Class"))",
+                        type: "POST",
+                        dataType: "json"
+                    },
+                    destroy: {
+                        url: "@Html.Raw(Url.Action("ClassScheduleTeacherDelete", "Omni_Class"))",
+                        type: "POST",
+                        dataType: "json"
+                    },
+                    parameterMap: function(data, operation) {
+                        if (operation != "read") {
+                            var d = new Date(data.TranDate);
+                            data.TranDate = kendo.toString(new Date(d), "yyyy-MM-dd");
+                            return data;
+                        }
+                    }
+                },
+                schema: {
+                    data: "Data",
+                    total: "Total",
+                    errors: "Errors",
+                    model: {
+                        id: "Id",
+                        fields: {
+                            Class_D_Id: { editable: false, type: "number", defaultValue : "@Model.Id " },
+                            Teacher_Id: { editable: true, type: "number" },
+                            //ClassTeacherPopup: { editable: true, type: "string" },
+                            Duration: { editable: true, type: "number" },
+                            Id: { editable: false, type: "number" }
+                        }
+                    }
+                },
+                requestEnd: function (e) {
+                    if (e.type == "create" || e.type == "update") {
+                        this.read();
+                    }
+                },
+                error: function(e) {
+                    display_kendoui_grid_error(e);
+                    // Cancel the changes
+                    this.cancelChanges();
+                },
+                pageSize: @(gridPageSize),
+                serverPaging: true,
+                serverFiltering: true,
+                serverSorting: true
+            },
+            resizable : true,
+            selectable: "row",
+            //pageable: {
+            //    refresh: true
+            //},
+            toolbar: ["create"],
+            editable: {
+                confirmation: false,
+                mode: "inline"
+            },
+            scrollable: false,
+            columns: [ {
+                field: "Teacher_Id",
+                title: "@T("Admin.Omni_Backoffice.ClassScheduleTeacher.Fields.Teacher_Id")",
+                editor: SetTeacherDropDownEditor,
+                template: '#=getTeacherName(Teacher_Id) #',
+                width: 400,
+                filterable: false
+            }, {
+                field: "Class_D_Id",
+                title: "@T("Admin.Omni_Backoffice.ClassScheduleTeacher.Fields.Class_D_Id")",
+                hidden : true
+            },{
+                field: "Duration",
+                title: "@T("Duration")",
+                width: 100
+            }, {
+
+                command: [{
+                    name: "edit",
+                    text: "@T("Admin.Common.Edit")",
+                }, {
+                    name: "destroy",
+                    text: "@T("Admin.Common.Delete")"
+                }],
+                filterable:false
+            }, {
+                field: "Id",
+                title: "@T("Admin.Omni_Backoffice.ClassScheduleTeacher.Fields.Id")",
+                hidden : true
+
+            }]
+        });
+    });
+</script>
+}
+
+
+            @helper TabRollCall()  // ScheduleRollcall Tab
+            {
+                var gridPageSize = EngineContext.Current.Resolve<Nop.Core.Domain.Common.AdminAreaSettings>().GridPageSize;
+
+                <div id="schedulerollcall-grid"></div>
+
+                <script>
+    kendo.culture("en-AU");
+    $(document).ready(function () {
+        $("#schedulerollcall-grid").kendoGrid({
+            dataSource: {
+                type: "json",
+                transport: {
+                    read: {
+                        url: "@Html.Raw(Url.Action("GetClassScheduleRollcallList", "Omni_Class", new { Class_D_Id = Model.Id }))",
+                        type: "POST",
+                        dataType: "json"
+                    },
+                    create: {
+                        url: "@Html.Raw(Url.Action("ClassScheduleRollcallInsert", "Omni_Class"))",
+                        type: "POST",
+                        dataType: "json"
+                    },
+                    update: {
+                        url:"@Html.Raw(Url.Action("ClassScheduleRollcallUpdate", "Omni_Class"))",
+                        type: "POST",
+                        dataType: "json"
+                    },
+                    destroy: {
+                        url: "@Html.Raw(Url.Action("ClassScheduleRollcallDelete", "Omni_Class"))",
+                        type: "POST",
+                        dataType: "json"
+                    },
+                    parameterMap: function(data, operation) {
+                        if (operation != "read") {
+                            var d = new Date(data.TranDate);
+                            data.TranDate = kendo.toString(new Date(d), "yyyy-MM-dd");
+                            return data;
+                        }
+                        @*else
+                        {
+                            return {
+                                Class_D_Id:  $('#@Html.FieldIdFor(model => model.Id)').val()
+                            };
+
+                        }*@
+                    }
+                },
+                aggregate: [{
+                    field: "Stud_Id",
+                    aggregate: "count"
+                }, {
+                    field: "Attend",
+                    aggregate: "sum"
+                }],
+                autoSync : true,
+                schema: {
+                    data: "Data",
+                    total: "Total",
+                    errors: "Errors",
+                    model: {
+                        id: "Id",
+                        fields: {
+                            Class_Id: { editable: false, type: "number", defalutValue: "@Model.Class_Id" },
+                            Class_D_Id: { editable: false, type: "number",defaultValue : "@Model.Id" },
+                            Stud_Id: { editable: false, type: "string", defaultValue : "_MAKEUP" },
+                            Stud_No: { editable: false, type: "string", defaultValue : "_MAKEUP" },
+                            Stud_Name:{ editable: true, type: "string", defaultValue : "" },
+                            Attend: {  editable: true, type: "number", defaultValue : "1" },
+                            Remarks: { editable: true, type: "string", defaultValue : "" },
+                            Id: { editable: false, type: "number", defaultValue : 0 }
+                        }
+                    }
+                },
+                requestEnd: function (e) {
+                    if (e.type == "create" || e.type == "update") {
+                        this.read();
+                    }
+                },
+                error: function(e) {
+                    display_kendoui_grid_error(e);
+                    // Cancel the changes
+                    this.cancelChanges();
+                },
+                serverPaging: false,
+                serverFiltering: false,
+                serverSorting: false
+            },
+
+            resizable : true,
+            selectable: "row",
+            toolbar: ["create"],
+            editable: {
+                confirmation: false,
+                mode: "incell"
+            },
+            batch : false,
+            scrollable: false,
+            columns: [{
+                field: "Class_Id",
+                title: "@T("Admin.Omni_Backoffice.ClassScheduleRollcall.Fields.Class_Id")",
+                hidden: true
+            },{
+                field: "Stud_Id",
+                title: "@T("Admin.Omni_Backoffice.ClassScheduleRollcall.Fields.Stud_Id")",
+                aggregates: ["count"],
+                footerTemplate: "<div style='float:right'>Total : #=count#</div>",
+                width: 400
+            },{
+                field: "Stud_No",
+                title: "@T("Admin.Omni_Backoffice.ClassScheduleRollcall.Fields.Stud_No")",
+                width: 400
+            },{
+                field: "Stud_Name",
+                title: "@T("Admin.Omni_Backoffice.ClassScheduleRollcall.Fields.Stud_Name")",
+                width: 400
+            },{
+                field: "Attend",
+                title: "Attendance",
+                template: '<img src="@Url.Content("~/Administration/Content/images/")active-#=Attend#.gif" />',
+                editor: SetYNDropDownEditor,
+                aggregates: ["sum"],
+                footerTemplate: "<div style='float:right'>Attendance : #=sum#</div>",
+                width: 100
+
+            },{
+                field: "Remarks",
+                title: "@T("Admin.Omni_Backoffice.ClassScheduleRollcall.Fields.Remarks")",
+                width: 300
+
+            },  {
+                command: [{
+                    name: "destroy",
+                    text: "@T("Admin.Common.Delete")"
+                }],
+                width: 200,
+                filterable:false
+            }, {
+                field: "Id",
+                title: "@T("Admin.Common.Edit")",
+                hidden: true
+
+            }]
+        });
+    });
+
+
+                    var allYNList = [{Code: "1", Name: "Yes" } , {Code: "0", Name: "No" }];
+
+                    function SetYNDropDownEditor(container, options) {
+                        $('<input required data-text-field="Name" data-value-field="Code" data-bind="value:'+options.field+'"/>')
+                            .appendTo(container)
+                            .kendoDropDownList({
+                                autoBind: false,
+                                dataSource: allYNList
+                            });
+                    }
+
+                 
+
+</script>
+                }

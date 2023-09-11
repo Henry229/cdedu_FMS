@@ -1,0 +1,216 @@
+﻿@model Nop.Admin.Models.Omni_Basis.CampusModel
+<div id="window_campuspopup">
+    <table width="100%">
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.Campus_Title):
+            </td>
+            <td class="adminData">
+                @Html.EditorFor(model => model.Campus_Title, new { @class = "adminInput" })
+                <input type="text" id="Campus_Prefix" readonly, style="display:none"/>
+            </td>
+        </tr>
+
+        <tr>
+            <td colspan="2">
+                <input type="button" id="btnSearchCampusPopup" class="k-button" value="@T("Admin.Common.Search")" />
+            </td>
+        </tr>
+    </table>
+    <p>
+    </p>
+
+    <table>
+        <tr>
+            <td>
+                <div id="campuspopup-grid"></div>
+
+                <script>
+                    kendo.culture("en-AU");
+                    var param_prefix = "";
+                    $(document).ready(function () {
+                        $("#campuspopup-grid").kendoGrid({
+                            dataSource: {
+                                type: "json",
+                                transport: {
+                                    read: {
+                                        url: "@Html.Raw(Url.Action("GetCampus", "Omni_Basis"))",
+                                        type: "POST",
+                                        dataType: "json"
+                                    },
+                                    create: {
+                                        url: "@Html.Raw(Url.Action("CampusInsert", "Omni_Basis"))",
+                                        type: "POST",
+                                        dataType: "json"
+                                    },
+                                    update: {
+                                        url: "@Html.Raw(Url.Action("CampusUpdate", "Omni_Basis"))",
+                                        type: "POST",
+                                        dataType: "json"
+                                    },
+                                    destroy: {
+                                        url: "@Html.Raw(Url.Action("CampusDelete", "Omni_Basis"))",
+                                        type: "POST",
+                                        dataType: "json"
+                                    },
+                                    parameterMap: function (data, operation) {
+                                        if (operation != "read") {
+                                            var d = new Date(data.reg_date);
+                                            data.reg_date = kendo.toString(new Date(d), "yyyy-MM-dd");
+                                            return data;
+                                        } else {
+
+                                            return {
+                                                Campus_Title: $('#@Html.FieldIdFor(model => model.Campus_Title)').val()
+                                            }
+
+                                        }
+                                    }
+                                },
+                                schema: {
+                                    data: "Data",
+                                    total: "Total",
+                                    errors: "Errors",
+                                    model: {
+                                        id: "Id",
+                                        fields: {
+                                            Campus_Title: { editable: true, type: "string" },
+                                            Campus_Prefix: { editable: true, type: "string" },
+                                            Suburb: { editable: true, type: "string" },
+                                            State: { editable: true, type: "string" },
+                                            Address1: { editable: true, type: "string" },
+                                            Address2: { editable: true, type: "string" },
+                                            PostCode: { editable: true, type: "string" },
+                                            PhoneNo: { editable: true, type: "string" },
+                                            LicenseeCode: { editable: true, type: "string" },
+                                            Email: { editable: true, type: "string" },
+                                        }
+                                    }
+                                },
+                                requestEnd: function (e) {
+                                    if (e.type == "create" || e.type == "update") {
+                                        this.read();
+                                    }
+                                },
+                                error: function (e) {
+                                    display_kendoui_grid_error(e);
+                                    // Cancel the changes
+                                    this.cancelChanges();
+                                },
+                                pageSize: 100000,
+                                serverPaging: true,
+                                serverFiltering: true,
+                                serverSorting: true
+                            },
+                            pageable: {
+                                refresh: true
+                            },
+                            sortable: false,
+                            scrollable: false,
+                            columns: [{
+
+                                field: "select",
+                                title: "Select",
+                                width: 100,
+                                template: '<a onclick=click_select_campus("#=Campus_Prefix#") href="javascript:void(0);"> Select </a>',
+                                editor: "<label></label>",
+                                editable: false,
+                                filterable: false
+                            },{
+                                field: "Campus_Title",
+                                title: "@T("Admin.Omni_Backoffice.Campus.Fields.campus_title")",
+                                width: 160,
+                                filterable: false,
+                                sortable: false
+                            }, {
+                                field: "Campus_Prefix",
+                                title: "@T("Admin.Omni_Backoffice.Campus.Fields.campus_prefix")",
+                                width: 40,
+                                filterable: false,
+                                sortable: false
+                            }, {
+                                field: "Suburb",
+                                title: "@T("Admin.Omni_Backoffice.Campus.Fields.Suburb")",
+                                width: 80,
+                                filterable: false,
+                                sortable: false
+                            }, {
+                                field: "State",
+                                title: "@T("Admin.Omni_Backoffice.Campus.Fields.State")",
+                                width: 60,
+                                filterable: false,
+                                sortable: false
+                            }, {
+                                field: "Address1",
+                                title: "@T("Admin.Omni_Backoffice.Campus.Fields.Address1")",
+                                width: 120,
+                                filterable: false,
+                                sortable: false
+                            }, {
+                                field: "Address2",
+                                title: "@T("Admin.Omni_Backoffice.Campus.Fields.Address2")",
+                                width: 60,
+                                hidden: true,
+                                filterable: false,
+                                sortable: false
+                            }, {
+                                field: "PostCode",
+                                title: "@T("Admin.Omni_Backoffice.Campus.Fields.PostCode")",
+                                width: 40,
+                                filterable: false,
+                                sortable: false
+                            }, {
+                                field: "PhoneNo",
+                                title: "@T("Admin.Omni_Backoffice.Campus.Fields.PhoneNo")",
+                                width: 120,
+                                hidden: true,
+                                filterable: false,
+                                sortable: false
+                            }, {
+                                field: "LicenseeCode",
+                                title: "@T("Admin.Omni_Backoffice.Campus.Fields.LicenseeCode")",
+                                width: 120,
+                                hidden: true,
+                                filterable: false,
+                                sortable: false
+                            }, {
+                                field: "Email",
+                                title: "@T("Admin.Omni_Backoffice.Campus.Fields.Email")",
+                                width: 120,
+                                hidden: true,
+                                filterable: false,
+                                sortable: false
+
+                            }]
+                        });
+                    });
+
+                </script>
+
+                <script type="text/javascript">
+
+                    $('#btnSearchCampusPopup').click(function () {
+                        var grid = $('#campuspopup-grid').data('kendoGrid');
+                        grid.dataSource.page(1); //new search. Set page size to 1
+                        grid.dataSource.read();
+
+                        return false;
+                    });
+
+
+                    function click_select_campus(campus_prefix) {
+                        document.getElementById('Campus_Prefix').value = campus_prefix;
+                        $("#window_campuspopup").data("kendoWindow").close();
+                    }
+
+
+                </script>
+
+
+
+
+
+            </td>
+        </tr>
+    </table>
+</div>

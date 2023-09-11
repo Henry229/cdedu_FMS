@@ -1,0 +1,410 @@
+﻿@model Nop.Admin.Models.Omni_Royalty.CourseRoyaltyModel
+@{
+    var gridPageSize = EngineContext.Current.Resolve<Nop.Core.Domain.Common.AdminAreaSettings>().GridPageSize;
+
+    //page title
+    ViewBag.Title = T("Admin.Omni_Royalty.CourseRoyalty").Text;
+}
+@using (Html.BeginForm())
+{
+
+    <div class="section-header">
+        <div class="title">
+            <img src="@Url.Content("~/Administration/Content/images/ico-sales.png")" alt="" />
+            @T("Admin.Omni_Royalty.CourseRoyalty")
+        </div>
+        <div class="options"><input type="button" id="confirm-invoice" class="k-button" value="@T("Admin.Omni_Royalty.Confirm")" /></div>
+        <div class="options"><input type="button" id="pdf-invoice" class="k-button" value="@T("Admin.Omni_Order.PdfInvoice")" /></div>
+        <div class="options"><input type="button" id="email-invoice" class="k-button" value="@T("Admin.Omni_Royalty.email")" /></div>
+
+    </div>
+    <table width="100%">
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.Year):
+            </td>
+            <td class="adminData">
+                @Html.DropDownListFor(model => model.Year, Model.AvailableYearList, new { @class = "adminInput" })
+            </td>
+        </tr>
+
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.Term):
+            </td>
+            <td class="adminData">
+                @Html.DropDownListFor(model => model.Term, Model.AvailableTermList, new { @class = "adminInput" })
+            </td>
+        </tr>
+
+
+        <tr>
+
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.BranchCode):
+            </td>
+            <td class="adminData">
+                @if (Model.is_admin)
+                {
+                    @Html.DropDownListFor(model => model.BranchCode, Model.AvailableBranchList, new { @class = "adminInput" })
+                }
+                else
+                {
+                    @Html.DropDownListFor(model => model.BranchCode, Model.AvailableBranchList, new { @class = "adminInput", @disabled = "disabled" })
+                }
+            </td>
+        </tr>
+        <tr>
+
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.InvoiceNo):
+            </td>
+            <td class="adminData">
+                @Html.TextBoxFor(model => model.InvoiceNo, new { @class = "adminInput", @readonly = "readonly" })
+                @Html.TextBox("email", null, new { @class = "adminInput", @readonly = "readonly" })
+            </td>
+        </tr>
+
+
+        <tr>
+            <td colspan="2">
+                <input type="button" id="btnSearch" class="k-button" value="@T("Admin.Common.Search")" />
+            </td>
+        </tr>
+    </table>
+    <p>
+    </p>
+    <style type="text/css">
+        .k-grid table tbody .k-alt {
+            background: Gainsboro;
+        }
+
+        .k-grid table tr.k-grid-edit-row {
+            background: gold;
+            color: black;
+        }
+    </style>
+    <table class="adminContent">
+        <tr>
+            <td>
+                <div id="itemsets-grid"></div>
+
+                <script>
+                    $(document).ready(function () {
+                        $("#itemsets-grid").kendoGrid({
+                            dataSource: {
+                                type: "json",
+                                transport: {
+                                    read: {
+                                        url: "@Html.Raw(Url.Action("GetCourseRoyaltyList", "Omni_Royalty"))",
+                                        type: "POST",
+                                        dataType: "json"
+                                        //data: additionalData
+                                    },
+
+
+                                    parameterMap: function (data, operation) {
+                                        if (operation != "read") {
+                                            return data;
+                                        } else {
+                                            return {  // 조회조건을 추가
+                                                Year: $('#@Html.FieldIdFor(model => model.Year)').val(),
+                                                Term: $('#@Html.FieldIdFor(model => model.Term)').val(),
+                                                BranchCode: $('#@Html.FieldIdFor(model => model.BranchCode)').val()
+                                            };
+                                            data.command.pageSize = 100;
+                                        }
+                                    }
+                                },
+                                aggregate: [{
+                                    field: "CourseRoyalty_IncGST",
+                                    aggregate: "sum"
+                                },{
+                                    field: "Earlybird",
+                                    aggregate: "sum"
+                                }, {   
+                                    field: "CourseFee_ExGST",
+                                    aggregate: "sum"
+                                }, {
+                                    field: "NetRoyalty",
+                                    aggregate: "sum"
+                                }, {   
+                                    field: "TotalTuition",
+                                    aggregate: "sum"
+                                }],
+                                autoSync: false,
+                                schema: {
+                                    data: "Data",
+                                    total: "Total",
+                                    errors: "Errors",
+                                    model: {
+                                        id: "Id",
+                                        fields: {
+                                            BranchCode: { editable: false, type: "string" },
+                                            Year: { editable: false, type: "string" },
+                                            Term: { editable: false, type: "string" },
+                                            Course_Id: { editable: false, type: "number" },
+                                            Course_Name: { editable: false, type: "string" },
+                                            TotalWeek: { editable: false, type: "number" },
+                                            Attendence: { editable: false, type: "number" },
+                                            Tuition_Unit: { editable: false, type: "number" },
+                                            TotalTuition: { editable: false, type: "number" },
+                                            Earlybird: { editable: false, type: "number" },
+                                            CourseFee_ExGST: { editable: false, type: "number" },
+                                            RoyaltyType: { editable: false, type: "string" },
+                                            NetRoyalty: { editable: false, type: "number" },
+                                            CourseRoyalty_IncGST: { editable: false, type: "number" }
+                                        }
+                                    }
+                                },
+                                requestEnd: function (e) {
+                                    if (e.type == "update") {
+                                        this.read();
+                                    }
+                                    else if ( e.type == "read")
+                                    {
+                                        getInvoiceNo();
+                                    }
+                                },
+                                error: function (e) {
+                                    display_kendoui_grid_error(e);
+                                    // Cancel the changes
+                                    this.cancelChanges();
+                                },
+
+                                serverPaging: true,
+                                serverFiltering: true,
+                                serverSorting: true,
+                                PageSize: 60
+                            },
+                            editable: {
+                                confirmation: false,
+                                mode: "inline"
+                            },
+                            scrollable: false,
+                            columns: [{
+                                field: "BranchCode",
+                                title: "@T("Admin.Omni_Royalty.CourseRoyalty.List.BranchCode")",
+                                template: '#=getBranchName(BranchCode) #',
+                                width: 120
+                            }, {
+                                field: "Course_Name",
+                                title: "@T("Admin.Omni_Royalty.CourseRoyalty.List.Course_Name")",
+                                footerTemplate: "<div > Total </div>",
+                                width: 170
+                            }, {
+                                field: "Tuition_Unit",
+                                title: "@T("Admin.Omni_Royalty.CourseRoyalty.List.Tuition_Unit")",
+                                format: '{0:n0}', attributes: { style: "text-align:right;" },
+                                width: 50
+                            }, {
+                                field: "Attendence",
+                                title: "@T("Admin.Omni_Royalty.CourseRoyalty.List.Attendence")",
+                                format: '{0:n0}', attributes: { style: "text-align:right;" },
+                                width: 50
+                            }, {
+                                field: "TotalTuition",
+                                title: "@T("Admin.Omni_Royalty.CourseRoyalty.List.TotalTuition")",
+                                format: '{0:n2}', attributes: { style: "text-align:right;" },
+                                aggregates: ["sum"],
+                                footerTemplate: "<div style='float:right'>#=kendo.toString(sum, 'C')#</div>",
+                                width: 70
+                            }, {
+                                field: "Earlybird",
+                                title: "@T("Admin.Omni_Royalty.CourseRoyalty.List.Earlybird")",
+                                format: '{0:n2}', attributes: { style: "text-align:right;" },
+                                aggregates: ["sum"],
+                                footerTemplate: "<div style='float:right'>#=kendo.toString(sum, 'C')#</div>",
+                                width: 70
+                            }, {
+                                field: "CourseFee_ExGST",
+                                title: "@T("Admin.Omni_Royalty.CourseRoyalty.List.CourseFee_ExGST")",
+                                format: '{0:n2}', attributes: { style: "text-align:right;" },
+                                aggregates: ["sum"],
+                                footerTemplate: "<div style='float:right'>#=kendo.toString(sum, 'C')#</div>",
+                                width: 70
+                            }, {
+                                field: "RoyaltyType",
+                                title: "@T("Admin.Omni_Royalty.CourseRoyalty.List.RoyaltyType")",
+                                width: 120
+                            }, {
+                                field: "NetRoyalty",
+                                title: "@T("Admin.Omni_Royalty.CourseRoyalty.List.NetRoyalty")",
+                                format: '{0:n2}', attributes: { style: "text-align:right;" },
+                                aggregates: ["sum"],
+                                footerTemplate: "<div style='float:right'>#=kendo.toString(sum, 'C')#</div>",
+                                //groupFooterTemplate: "Sum: #=sum#",
+                                width: 70
+                            }, {
+                                field: "CourseRoyalty_IncGST",
+                                title: "@T("Admin.Omni_Royalty.CourseRoyalty.List.CourseRoyalty_IncGST")",
+                                format: '{0:n2}', attributes: { style: "text-align:right;" },
+                                aggregates: ["sum"],
+                                footerTemplate: "<div style='float:right'>#=kendo.toString(sum, 'C')#</div>",
+                                width: 70
+                            }]
+                        });
+                    });
+                </script>
+
+                <script type="text/javascript">
+
+                    $(document).ready(function () {
+
+                        $('#btnSearch').click(function () {
+                            var grid = $('#itemsets-grid').data('kendoGrid');
+                            grid.dataSource.page(1); //new search. Set page size to 1
+                            grid.dataSource.read();
+            
+                            return false;
+                        });
+
+                        $('#pdf-invoice').click(function (e) {
+                            e.preventDefault();
+                            //redirect to required URL
+                            setLocation('@(Url.Action("PdfInvoiceRoyalty", "Omni_Royalty"))?year=' + $('#@Html.FieldIdFor(model => model.Year)').val()
+                                + '&term=' + $('#@Html.FieldIdFor(model => model.Term)').val() + '&branch=' + $('#@Html.FieldIdFor(model => model.BranchCode)').val());
+                            return false;
+                        });
+
+                        $('#confirm-invoice').click(function (e) {
+                            e.preventDefault();
+                            //redirect to required URL
+
+                            var url = "/Admin/Omni_Royalty/ConfirmInvoice";
+                            var pyear = $('#@Html.FieldIdFor(model => model.Year)').val();
+                            var pterm = $('#@Html.FieldIdFor(model => model.Term)').val();
+                            var pbranch = $('#@Html.FieldIdFor(model => model.BranchCode)').val();
+                            var ptype = 'ROYL';
+
+   
+                            $.post(url, { year: pyear, term: pterm, branch: pbranch, type:ptype }, function (data) {
+                                if ( data.length > 0 )
+                                {
+                                    alert(data);
+                                }
+                                else
+                                {
+                                    getInvoiceNo();
+                                }
+                                false;
+                            });
+
+
+                            return false;
+                        });
+
+
+                        $('#email-invoice').click(function (e) {
+                            e.preventDefault();
+                            //redirect to required URL
+
+                            var email = document.getElementById('email').value;
+                            var subject = "Royalty Invoice "
+
+                            window.location = 'mailto:' + email + '?subject=' + subject;
+                            return true;
+                        });
+
+
+
+                    });
+
+                    function getInvoiceNo()
+                    {
+                        var url = "/Admin/Omni_Royalty/GetInvoiceNo";
+                        var pyear = $('#@Html.FieldIdFor(model => model.Year)').val();
+                        var pterm = $('#@Html.FieldIdFor(model => model.Term)').val();
+                        var pbranch = $('#@Html.FieldIdFor(model => model.BranchCode)').val();
+                        var ptype = 'ROYL';
+
+                        $.post(url, { year: pyear, term: pterm, branch: pbranch, type: ptype }, function (data) {
+
+                            document.getElementById('InvoiceNo').value = data;
+
+                            false;
+                        });
+                    }
+
+                    var allBranchList = [
+
+                        @for (int i = 0; i < Model.AvailableBranchList.Count; i++)
+        {
+            var branch = Model.AvailableBranchList[i];
+            <text>
+                            {
+                                Code: "@branch.Value",
+                                Name: "@branch.Text"
+                            }
+                            </text>
+            if (i != Model.AvailableBranchList.Count - 1)
+            {
+                    <text>,</text>
+            }
+        }
+                    ];
+
+                    function getBranchName(branch) {
+                        for (var i = 0; i < allBranchList.length; i++) {
+                            if (allBranchList[i].Code == branch)
+                                return allBranchList[i].Name;
+                        }
+
+                        return branch;
+                    }
+
+
+                    function getQtyTypeName(qtytype) {
+                        if (qtytype == "BOOK")
+                            return "Book order";
+                        else
+                            return "Actual";
+                    }
+
+
+
+
+
+                    var allTermList = [
+
+                @for (int i = 0; i < Model.AvailableTermList.Count; i++)
+    {
+        var term = Model.AvailableTermList[i];
+        <text>
+                        {
+                            Code: "@term.Value",
+                            Name: "@term.Text"
+                        }
+                        </text>
+        if (i != Model.AvailableTermList.Count - 1)
+        {
+            <text>,</text>
+        }
+    }
+                    ];
+
+                    function TermDropDownEditor(container, options) {
+                        $('<input required data-text-field="Name" data-value-field="Code" data-bind="value:' + options.field + '"/>')
+                            .appendTo(container)
+                            .kendoDropDownList({
+                                autoBind: false,
+                                dataSource: allTermList
+                            });
+                    }
+
+                    function getTermName(term) {
+                        for (var i = 0; i < allTermList.length; i++) {
+                            if (allTermList[i].Code == term)
+                                return allTermList[i].Name;
+                        }
+
+                        return term;
+                    }
+
+
+                </script>
+            </td>
+        </tr>
+
+    </table>
+}

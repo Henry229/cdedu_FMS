@@ -1,0 +1,443 @@
+﻿@using Nop.Services.Omni_Backoffice
+@model Nop.Admin.Models.Omni_Basis.CampusModel
+@{
+    var gridPageSize = 1000;
+
+    //page title
+    ViewBag.Title = T("Admin.Omni_Basis.Campus").Text;
+}
+<div class="section-header">
+    <div class="title">
+        <img src="@Url.Content("~/Administration/Content/images/ico-configuration.png")" alt="" />
+        @T("Admin.Omni_Basis.Campus")
+    </div>
+</div>
+
+    <table width="100%">
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.Campus_Title):
+            </td>
+            <td class="adminData">
+                @Html.EditorFor(model => model.Campus_Title, new { @class = "adminInput" })
+            </td>
+        </tr>
+
+        <tr>
+            <td colspan="2">
+                <input type="button" id="btnSearch" class="k-button" value="@T("Admin.Common.Search")" />
+            </td>
+        </tr>
+    </table>
+    <p>
+    </p>
+
+<table class="adminContent">
+    <tr>
+        <td>
+            @T("Admin.Omni_Basis.CourseMaster.Description")
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <div id="settings-grid"></div>
+
+            <script>
+                kendo.culture("en-AU");
+                $(document).ready(function () {
+                    $("#settings-grid").kendoGrid({
+                        dataSource: {
+                            type: "json",
+                            transport: {
+                                read: {
+                                    url: "@Html.Raw(Url.Action("GetCampus", "Omni_Basis"))",
+                                    type: "POST",
+                                    dataType: "json"
+                                },
+                                create: {
+                                    url: "@Html.Raw(Url.Action("CampusInsert", "Omni_Basis"))",
+                                    type: "POST",
+                                    dataType: "json"
+                                },
+                                update: {
+                                    url:"@Html.Raw(Url.Action("CampusUpdate", "Omni_Basis"))",
+                                    type: "POST",
+                                    dataType: "json"
+                                },
+                                destroy: {
+                                    url: "@Html.Raw(Url.Action("CampusDelete", "Omni_Basis"))",
+                                    type: "POST",
+                                    dataType: "json"
+                                },
+                                parameterMap: function(data, operation) {
+                                    if (operation != "read") {
+                                        var d = new Date(data.reg_date);
+                                        data.reg_date = kendo.toString(new Date(d), "yyyy-MM-dd");
+                                        return data;
+                                    } else {
+
+                                        return {
+                                            Campus_Title: $('#@Html.FieldIdFor(model => model.Campus_Title)').val()
+                                        }
+
+                                    }
+                                }
+                            },
+                            schema: {
+                                data: "Data",
+                                total: "Total",
+                                errors: "Errors",
+                                model: {
+                                    id: "Id",
+                                    fields: {
+                                        Campus_Title: { editable: true, type: "string" },
+                                        Campus_Prefix: { editable: true, type: "string" },
+                                        Campus_EN: { editable: true, type: "string" },
+                                        Suburb: { editable: true, type: "string" },
+                                        State: { editable: true, type: "string" },
+                                        Address1: { editable: true, type: "string" },
+                                        Address2: { editable: true, type: "string" },
+                                        PostCode: { editable: true, type: "string" },
+                                        ABN: { editable: true, type: "string" },
+                                        PhoneNo: { editable: true, type: "string" },
+                                        LicenseeCode: { editable: true, type: "string" },
+                                        Email: { editable: true, type: "string" },
+                                        RoyaltyType: { editable: true, type: "string" },
+                                        RoyaltyType_HI: { editable: true, type: "string" },
+                                        RoyaltyType_PA: { editable: true, type: "string" },
+                                        RoyaltyType_TT: { editable: true, type: "string" },
+                                        YN_Use: { editable: true, type: "string" }//,
+                                        //reg_date: { editable: true, type: "date" },
+                                        //reg_source: { editable: true, type: "string" }
+                                    }
+                                }
+                            },
+                            requestEnd: function (e) {
+                                if (e.type == "create" || e.type == "update") {
+                                    this.read();
+                                }
+                            },
+                            error: function (e) {
+                                display_kendoui_grid_error(e);
+                                // Cancel the changes
+                                this.cancelChanges();
+                            },
+                            pageSize: 1000,
+                            serverPaging: true,
+                            serverFiltering: true,
+                            serverSorting: true
+                        },
+                        pageable: false,
+                        sortable: true,
+                        toolbar: ["create"],
+                        editable: {
+                            confirmation: false,
+                            //mode: "inline"
+                            mode: "popup"
+                        },
+                        filterable: {
+                            extra: false,
+                            operators: {
+                                string: {
+                                    contains: "Contains",
+                                    eq: "Is equal to"
+                                }
+                            }
+                        },
+                        scrollable: false,
+                        columns: [{
+                            field: "Campus_Title",
+                            title: "@T("Admin.Omni_Backoffice.Campus.Fields.campus_title")",
+                            width: 160,
+                            filterable: false,
+                            sortable: false
+                        }, {
+                            field: "Campus_Prefix",
+                            title: "@T("Admin.Omni_Backoffice.Campus.Fields.campus_prefix")",
+                            width: 40,
+                            filterable: false,
+                            sortable: false
+                        }, {
+                            field: "Campus_EN",
+                            title: "@T("Admin.Omni_Backoffice.Campus.Fields.campus_en")",
+                            width: 40,
+                            filterable: false,
+                            sortable: false
+                        }, {
+                            field: "Suburb",
+                            title: "@T("Admin.Omni_Backoffice.Campus.Fields.Suburb")",
+                            width: 80,
+                            filterable: false,
+                            sortable: false
+                        }, {
+                            field: "State",
+                            title: "@T("Admin.Omni_Backoffice.Campus.Fields.State")",
+                            width: 60,
+                            filterable: false,
+                            sortable: false
+                        }, {
+                            field: "Address1",
+                            title: "@T("Admin.Omni_Backoffice.Campus.Fields.Address1")",
+                            width: 120,
+                            filterable: false,
+                            sortable: false
+                        }, {
+                            field: "Address2",
+                            title: "@T("Admin.Omni_Backoffice.Campus.Fields.Address2")",
+                            width: 60,
+                            hidden:true,
+                            filterable: false,
+                            sortable: false
+                        },{
+                            field: "PostCode",
+                            title: "@T("Admin.Omni_Backoffice.Campus.Fields.PostCode")",
+                            width: 40,
+                            filterable: false,
+                            sortable: false
+                        },{
+                            field: "ABN",
+                            title: "@T("Admin.Omni_Backoffice.Campus.Fields.ABN")",
+                            width: 100,
+                            filterable: false,
+                            sortable: false
+                        },{
+                            field: "PhoneNo",
+                            title: "@T("Admin.Omni_Backoffice.Campus.Fields.PhoneNo")",
+                            width: 120,
+                            hidden:true,
+                            filterable: false,
+                            sortable: false
+                        },{
+                            field: "LicenseeCode",
+                            title: "@T("Admin.Omni_Backoffice.Campus.Fields.LicenseeCode")",
+                            width: 120,
+                            hidden:true,
+                            filterable: false,
+                            sortable: false
+                        },{
+                            field: "Email",
+                            title: "@T("Admin.Omni_Backoffice.Campus.Fields.Email")",
+                            width: 120,
+                            hidden:true,
+                            filterable: false,
+                            sortable: false
+                        }, {
+                            field: "RoyaltyType",
+                            title: "@T("Admin.Omni_Backoffice.Campus.Fields.RoyaltyType")",
+                            width: 60,
+                            filterable: false,
+                            sortable: false,
+                            editor : RoyaltyTypeDropDownEditor,
+                            template: '#=getRoyaltyTypeName(RoyaltyType) #'
+                        },{
+                            field: "RoyaltyType_HI",
+                            title: "@T("Admin.Omni_Backoffice.Campus.Fields.RoyaltyType_HI")",
+                            width: 60,
+                            filterable: false,
+                            sortable: false,
+                            editor : RoyaltyTypeDropDownEditor,
+                            template: '#=getRoyaltyTypeName(RoyaltyType_HI) #'
+                        },{
+                            field: "RoyaltyType_PA",
+                            title: "@T("Admin.Omni_Backoffice.Campus.Fields.RoyaltyType_PA")",
+                            width: 60,
+                            filterable: false,
+                            sortable: false,
+                            hidden:true,
+                            editor : RoyaltyType_PADropDownEditor,
+                            template: '#=getRoyaltyType_PAName(RoyaltyType_PA) #'
+
+                        },{
+                            field: "RoyaltyType_TT",
+                            title: "@T("Admin.Omni_Backoffice.Campus.Fields.RoyaltyType_TT")",
+                            width: 60,
+                            filterable: false,
+                            sortable: false,
+                            hidden:true,
+                            editor : RoyaltyType_TTDropDownEditor,
+                            template: '#=getRoyaltyType_TTName(RoyaltyType_TT) #'
+                        },{
+                            field: "YN_Use",
+                            title: "@T("Admin.Omni_Backoffice.Campus.Fields.YN_Use")",
+                            editor: YNDropDownEditor,
+                            //template: "#:Store#",
+                            width: 20,
+                            filterable: false,
+                            sortable: false
+                        },
+                            {
+                                command: [{
+                                    name: "edit",
+                                    text: "@T("Admin.Common.Edit")"
+                                }, {
+                                    name: "destroy",
+                                    text: "@T("Admin.Common.Delete")"
+                                }],
+                                width: 200,
+                                filterable: false
+                            }]
+                    });
+                });
+
+                //DropDown YN
+                var itemYN = [
+                    {  Id : "",
+                        Name : ""
+                    },
+                    {  Id : "Y",
+                        Name : "YES"
+                    },
+                    {
+                        Id : "N",
+                        Name : "NO"
+                    }];
+
+
+
+                function YNDropDownEditor(container, options) {
+                    $('<input required data-text-field="Name" data-value-field="Id" data-bind="value:YN_Use"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            autoBind: false,
+                            dataSource: itemYN
+                        });
+                }
+            </script>
+
+            <script type="text/javascript">
+                var selectedIds = [];
+                $(document).ready(function () {
+                    @*검색*@
+                    $('#btnSearch').click(function () {
+                        var grid = $('#settings-grid').data('kendoGrid');
+                        grid.dataSource.page(1); //new search. Set page size to 1
+                        grid.dataSource.read();
+
+                        $('.checkboxGroups').attr('checked', false).change();
+                        selectedIds = [];
+                        return false;
+                    });
+                });
+                @*그리드의 리스트 박스에서 사용*@
+                //data source
+                var allRoyaltyTypeList = [
+
+                @for (int i = 0; i < Model.AvailableRoyaltyType.Count; i++)
+                {
+                    var term = Model.AvailableRoyaltyType[i];
+                    <text>
+                                {
+                                    Code: "@term.Value",
+                                    Name: "@term.Text"
+                                }
+                                </text>
+                    if (i != Model.AvailableRoyaltyType.Count - 1)
+                    {
+                        <text>,</text>
+                    }
+                }
+                ];
+
+                function RoyaltyTypeDropDownEditor(container, options) {
+                    $('<input required data-text-field="Name" data-value-field="Code" data-bind="value:'+options.field+'"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            autoBind: false,
+                            dataSource: allRoyaltyTypeList
+                        });
+                }
+
+                function getRoyaltyTypeName(year)
+                {
+                    for ( var i = 0; i < allRoyaltyTypeList.length; i++)
+                    {
+                        if ( allRoyaltyTypeList[i].Code == year)
+                            return allRoyaltyTypeList[i].Name;
+                    }
+
+                    return year;
+                }
+
+                var allRoyaltyType_PAList = [
+
+                @for (int i = 0; i < Model.AvailableRoyaltyType_PA.Count; i++)
+    {
+        var term = Model.AvailableRoyaltyType_PA[i];
+        <text>
+                    {
+                        Code: "@term.Value",
+                        Name: "@term.Text"
+                    }
+                    </text>
+        if (i != Model.AvailableRoyaltyType_PA.Count - 1)
+        {
+            <text>,</text>
+        }
+    }
+                ];
+
+                function RoyaltyType_PADropDownEditor(container, options) {
+                    $('<input required data-text-field="Name" data-value-field="Code" data-bind="value:'+options.field+'"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            autoBind: false,
+                            dataSource: allRoyaltyType_PAList
+                        });
+                }
+
+                function getRoyaltyType_PAName(term)
+                {
+                    for ( var i = 0; i < allRoyaltyType_PAList.length; i++)
+                    {
+                        if ( allRoyaltyType_PAList[i].Code == term)
+                            return allRoyaltyType_PAList[i].Name;
+                    }
+
+                    return term;
+                }
+
+                var allRoyaltyType_TTList = [
+
+            @for (int i = 0; i < Model.AvailableRoyaltyType_TT.Count; i++)
+            {
+                var grade = Model.AvailableRoyaltyType_TT[i];
+                <text>
+                            {
+                                Code: "@grade.Value",
+                                Name: "@grade.Text"
+                            }
+                            </text>
+                if (i != Model.AvailableRoyaltyType_TT.Count - 1)
+                {
+                    <text>,</text>
+                }
+            }
+                ];
+
+
+                function RoyaltyType_TTDropDownEditor(container, options) {
+                    $('<input required data-text-field="Name" data-value-field="Code" data-bind="value:'+options.field+'"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            autoBind: false,
+                            dataSource: allRoyaltyType_TTList
+                        });
+                }
+                function getRoyaltyType_TTName(grade)
+                {
+                    for ( var i = 0; i < allRoyaltyType_TTList.length; i++)
+                    {
+                        if ( allRoyaltyType_TTList[i].Code == grade)
+                            return allRoyaltyType_TTList[i].Name;
+                    }
+
+                    return grade;
+                }
+
+
+
+            </script>
+
+        </td>
+    </tr>
+</table>

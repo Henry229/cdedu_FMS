@@ -1,0 +1,84 @@
+﻿<table class="adminContent">
+    <tr>
+        <td>
+
+            <div id="my-order-report-grid"></div>
+            <script>
+    $(document).ready(function () {
+        $("#my-order-report-grid").kendoGrid({
+            dataSource: {
+                type: "json",
+                transport: {
+                    read: {
+                        url: "@Html.Raw(Url.Action("MyorderReportList", "Omni_Order"))",
+                        type: "POST",
+                        dataType: "json"
+                    }
+                },
+                schema: {
+                    data: "Data",
+                    total: "Total",
+                    errors: "Errors"
+                },
+                error: function (e) {
+                    display_kendoui_grid_error(e);
+                    // Cancel the changes
+                    this.cancelChanges();
+                },
+                serverPaging: true,
+                serverFiltering: true,
+                serverSorting: true
+            },
+            pageable: {
+                refresh: true,
+                numeric: false,
+                previousNext: false,
+                info: false
+            },
+            editable: {
+                confirmation: false,
+                mode: "inline"
+            },
+            scrollable: false,
+            columns: [{
+                field: "Id",
+                title: "@T("Id")"
+            }, {
+                field: "OrderType",
+                title: "@T("OrderType")"
+            /*Edited by Karen See 22/02/2021*/
+            //}, {
+            //    field: "OrderDate",
+            //    title: "("Order Date")",
+            //    type: "date",
+            //        template: "#= kendo.toString(OrderDate, 'dd/MM/yyyy') #"            
+            }, {
+                field: "ConfirmDate",
+                title: "@T("Confirm Date")",
+                type: "date",
+                    template: "#= kendo.toString(ConfirmDate, 'dd/MM/yyyy') #"
+            }, {
+                field: "EstimateDate",
+                title: "@T("Estimate Date")",
+                type: "date",
+                template: "#= kendo.toString(EstimateDate, 'dd/MM/yyyy') #"
+
+            }, {
+                field: "Status",
+                title: "@T("Order Status")"
+            },{
+                field: "View",
+                title: "View",
+                width: 100,
+                template: '<a href="/Admin/Omni_Order/EditOrder/#=Id#">View</a>',
+                editor : "<label></label>",
+                editable: false,
+                filterable:false
+
+                        }]
+                    });
+                });
+            </script>
+        </td>
+    </tr>
+</table>

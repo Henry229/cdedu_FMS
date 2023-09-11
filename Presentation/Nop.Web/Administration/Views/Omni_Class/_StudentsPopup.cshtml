@@ -1,0 +1,196 @@
+﻿@model Nop.Admin.Models.Omni_Class.ClassStudentModel
+
+<div id="window_studentspopup">
+    <table width="100%">
+        
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.FirstName):
+            </td>
+            <td class="adminData">
+                @Html.EditorFor(model => model.FirstName, new { @class = "adminInput" })
+                <input type="text" id="StudId" readonly, style="display:none" />
+                <input type="text" id="IdNumber" readonly, style="display:none" />
+            </td>
+        </tr>
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.LastName):
+            </td>
+            <td class="adminData">
+                @Html.EditorFor(model => model.LastName, new { @class = "adminInput" })
+                
+            </td>
+        </tr>
+       
+        <tr>
+            <td colspan="2">
+                <input type="button" id="btnSearchStudentsPopup" class="k-button" value="@T("Admin.Common.Search")" />
+            </td>
+        </tr>
+    </table>
+    <p>
+    </p>
+
+    <table>
+        <tr>
+            <td>
+                <div id="studentspopup-grid"></div>
+
+                <script>
+                    kendo.culture("en-AU");
+                    var param_prefix = "";
+                    $(document).ready(function () {
+                        $("#studentspopup-grid").kendoGrid({
+                            dataSource: {
+                                type: "json",
+                                transport: {
+                                    read: {
+                                        url: "@Html.Raw(Url.Action("GetClassStudentList", "Omni_Class"))",
+                                        type: "POST",
+                                        dataType: "json"
+                                    },
+                                    parameterMap: function (data, operation) {
+                                        if (operation != "read") {
+                                            //var d = new Date(data.reg_date);
+                                            //data.reg_date = kendo.toString(new Date(d), "yyyy-MM-dd");
+                                            return data;
+                                        } else {
+
+                                            return {
+                                                Branch: $('#@Html.FieldIdFor(model => model.Branch)').val(),
+                                                FirstName: $('#@Html.FieldIdFor(model => model.FirstName)').val(),
+                                                LastName: $('#@Html.FieldIdFor(model => model.LastName)').val()
+                                            }
+
+                                        }
+                                    }
+                                },
+                                schema: {
+                                    data: "Data",
+                                    total: "Total",
+                                    errors: "Errors",
+                                    model: {
+                                        id: "Id",
+                                        fields: {
+                                            Branch: { editable: false, type: "string" },
+                                            Stud_Id: { editable: false, type: "string" },
+                                            FirstName: { editable: false, type: "string" },
+                                            LastName: { editable: false, type: "string" },
+                                            Grade: { editable: false, type: "string" },
+                                            BirthDay: { editable: false, type: "string" },
+                                            SchoolName: { editable: false, type: "string" },
+                                            ID_Number: { editable: false, type: "string" },
+                                            Id: { editable: false, type: "number" }
+                                        }
+                                    }
+                                },
+                                requestEnd: function (e) {
+                                    if (e.type == "create" || e.type == "update") {
+                                        this.read();
+                                    }
+                                },
+                                error: function (e) {
+                                    display_kendoui_grid_error(e);
+                                    // Cancel the changes
+                                    this.cancelChanges();
+                                },
+                                pageSize: 100000,
+                                serverPaging: true,
+                                serverFiltering: true,
+                                serverSorting: true
+                            },
+                            pageable: {
+                                refresh: true
+                            },
+                            resizable: true,
+                            scrollable: false,
+                            columns: [{
+                                        field: "select",
+                                        title: "Select",
+                                        width: 100,
+                                        template: '<a onclick=click_select_students("#=Stud_Id#","#=ID_Number#") href="javascript:void(0);"> Select </a>',
+                                        editor: "<label></label>",
+                                        editable: false,
+                                        filterable: false
+                                    }//, {
+                                    //   field: "Id",
+                                    //   title: "ID",
+                                    //   hidden: true,
+                                    //   filterable: false
+                            //}
+                                    , {
+                                       field: "Branch",
+                                       title: "@T("Admin.Omni_Backoffice.ClassStudent.Fields.Branch")",
+                                       editor: SetBranchDropDownEditor,
+                                       template: '#=getBranchName(Branch) #',
+                                       width: 100,
+                                       filterable: false
+                                    }, {
+                                       field: "Stud_Id",
+                                       title: "@T("Admin.Omni_Backoffice.ClassStudent.Fields.Stud_Id")",
+                                       width: 170,
+                                       filterable: false
+                                    }, {
+                                       field: "FirstName",
+                                       title: "@T("Admin.Omni_Backoffice.ClassStudent.Fields.FirstName")",
+                                       width: 170,
+                                       filterable: false
+                                    }, {
+                                       field: "LastName",
+                                       title: "@T("Admin.Omni_Backoffice.ClassStudent.Fields.LastName")",
+                                       width: 170,
+                                       filterable: false
+                                   }, {
+                                      field: "Grade",
+                                      title: "@T("Admin.Omni_Backoffice.ClassStudent.Fields.TeachingGrade")",
+                                      //editor: SetCsGradeDropDownEditor,
+                                      //template: '#=getCsGradeName(Grade) #',
+                                      width: 50,
+                                      filterable: false
+                                   }, {
+                                      field: "BirthDay",
+                                      title: "@T("Admin.Omni_Backoffice.ClassStudent.Fields.BirthDay")",
+                                      width: 300,
+                                      filterable: false
+                                   }, {
+                                      field: "ID_Number",
+                                      title: "@T("Admin.Omni_Backoffice.ClassStudent.Fields.ID_Number")",
+                                      width: 300,
+                                      filterable: false
+                                   }]
+                        });
+                    });
+
+                </script>
+
+                <script type="text/javascript">
+
+                    $('#btnSearchStudentsPopup').click(function () {
+                        var grid = $('#studentspopup-grid').data('kendoGrid');
+                        grid.dataSource.page(1); //new search. Set page size to 1
+                        grid.dataSource.read();
+
+                        return false;
+                    });
+
+
+                    function click_select_students(stud_id,id_number) {
+                        
+                        document.getElementById('StudId').value = stud_id;
+                        document.getElementById('IdNumber').value = id_number;
+                        $("#window_studentspopup").data("kendoWindow").close();
+                    }
+
+                   
+
+                </script>
+
+
+
+
+
+            </td>
+        </tr>
+    </table>
+</div>

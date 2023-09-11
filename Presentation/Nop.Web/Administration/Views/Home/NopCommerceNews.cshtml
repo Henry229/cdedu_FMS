@@ -1,0 +1,29 @@
+﻿@model DashboardModel
+
+@using System.ServiceModel.Syndication;
+@using Nop.Core.Domain.Common;
+<div class="nop-news">
+    <div class="section-header">
+        <div class="title">
+            <img src="@Url.Content("~/Administration/Content/images/ico-news.gif")" alt="" />
+            @T("Admin.CSNews")
+        </div>
+    </div>
+    <div class="newsitemgroup">
+        @foreach (var item in Model.NewsItemList)
+        {
+            <div class="newsitem">
+                <div class="newstitle">
+                        @item.Title
+                </div>
+                <div class="newsdate">
+                    @item.CreatedOn.ToString("d")
+                </div>
+                <div class="newsdetails">
+                    @Html.Raw(item.Short)
+                </div>
+            </div>
+        }
+    </div>
+
+</div>

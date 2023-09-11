@@ -1,0 +1,18 @@
+﻿@model Nop.Admin.Models.Omni_Printing.PrintRequestModel
+@{
+    //page title
+    ViewBag.Title = T("Admin.Omni_Printing.Request.AddNew").Text;
+}
+@using (Html.BeginForm())
+{
+    <div class="section-header">
+        <div class="title">
+            <img src="@Url.Content("~/Administration/Content/images/ico-sales.png")" alt="" />
+            @T("Admin.Omni_Printing.Request.AddNew") @Html.ActionLink("(" + T("Admin.Omni_Class.Classes.BackToList") + ")", "RequestList")
+        </div>
+        <div class="options">
+            <input type="submit" name="save" class="k-button" value="@T("Admin.Common.Save")" />
+        </div>
+    </div>
+    @Html.Partial("_CreateOrUpdateRequest", Model)
+}

@@ -1,0 +1,328 @@
+﻿@model Nop.Admin.Models.Omni_Order.PrintingPaperModel
+@{
+    var gridPageSize = EngineContext.Current.Resolve<Nop.Core.Domain.Common.AdminAreaSettings>().GridPageSize;
+
+    //page title
+    ViewBag.Title = T("Admin.Omni_Order.PrintingPaper").Text;
+}
+@using (Html.BeginForm())
+{
+    <div class="section-header">
+        <div class="title">
+            <img src="@Url.Content("~/Administration/Content/images/ico-sales.png")" alt="" />
+            @T("Admin.Omni_Order.PrintingPaper")
+        </div>
+
+    </div>
+    <table width="100%">
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.Year):
+            </td>
+            <td class="adminData">
+                @Html.DropDownListFor(model => model.Year, Model.AvailableOrderYear, new { @class = "adminInput" })
+            </td>
+        </tr>
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.Term):
+            </td>
+            <td class="adminData">
+                @Html.DropDownListFor(model => model.Term, Model.AvailableOrderTerm, new { @class = "adminInput" })
+            </td>
+        </tr>
+        <tr>
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.AvailableBranchCode):
+            </td>
+            <td class="adminData">
+                @if (Model.isadmin)
+                {
+                    @Html.DropDownListFor(model => model.BranchCode, Model.AvailableBranchCode, new { @class = "adminInput" })
+                }
+                else
+                {
+                    @Html.DropDownListFor(model => model.BranchCode, Model.AvailableBranchCode, new { @class = "adminInput", @disabled = "disabled" })
+                }
+            </td>
+        </tr>
+
+        <tr>
+            <td colspan="2">
+                <input type="button" id="btnSearch" class="k-button" value="@T("Admin.Common.Search")" />
+            </td>
+        </tr>
+
+    </table>
+    <p>
+    </p>
+    <table class="adminContent">
+        @Html.ValidationSummary()
+        <tr>
+            <td>
+                <div id="grid"></div>
+
+                <script>
+                    kendo.culture("en-AU");
+                    $(document).ready(function () {
+                        $("#grid").kendoGrid({
+                            dataSource: {
+                                type: "json",
+                                transport: {
+                                    read: {
+                                        url: "@Html.Raw(Url.Action("GetPrintingPaperList", "Omni_Order"))",
+                                        type: "POST",
+                                        dataType: "json"
+                                    },
+                                   
+                                    update: {
+                                        url: "@Html.Raw(Url.Action("PrintingPaperUpdate", "Omni_Order"))",
+                                        type: "POST",
+                                        dataType: "json"
+                                    },
+
+                                    parameterMap: function (data, operation) {
+                                        if (operation != "read") {
+                                            var d = new Date(data.OrderDate);
+                                            data.OrderDate = kendo.toString(new Date(d), "yyyy-MM-dd");
+                                            return data;
+                                        } else {
+                                            return {
+                                                BranchCode: $('#@Html.FieldIdFor(model => model.BranchCode)').val(),
+                                                Year: $('#@Html.FieldIdFor(model => model.Year)').val(),
+                                                Term: $('#@Html.FieldIdFor(model => model.Term)').val()
+                                            };
+                                        }
+                                    }
+                                },
+                                autoSync: false,
+                                schema: {
+                                    data: "Data",
+                                    total: "Total",
+                                    errors: "Errors",
+                                    model: {
+                                        id: "Id",
+                                        fields: {
+                                            BranchCode: { editable: false, type: "string", defaultValue: "@Model.BranchCode" },
+                                            Year: { editable: false, type: "string", defaultValue: "@Model.Year" },
+                                            Term: { editable: false, type: "string", defaultValue: "@Model.Term" },
+                                            Course_Id: { editable: false, type: "number" },
+                                            Course: { editable: false, type: "string" },
+                                            TestNo: { editable: false, type: "number" },
+                                            Qty: { editable: false, type: "number" },
+                                            Qty_Teacher: { editable: false, type: "number" },
+                                            YN_Print: { editable: true, type: "string" },
+                                            Id: { editable: false, type: "number" }
+                                        }
+                                    }
+                                },
+                                requestEnd: function (e) {
+                                    if (e.type == "create" || e.type == "update") {
+                                        this.read();
+                                    }
+                                },
+                                error: function (e) {
+                                    display_kendoui_grid_error(e);
+                                    // Cancel the changes
+                                    this.cancelChanges();
+                                },
+                                pageSize: 10000,
+                                serverPaging: false,
+                                serverFiltering: false,
+                                serverSorting: false
+                            },
+                            resizable: true,
+                            editable: {
+                                confirmation: false,
+                                mode: "inline"
+                            },
+                            scrollable: false,
+                            columns: [
+                            {
+                                field: "Id",
+                                title: "@T("#")",
+                                width: 50,
+                                hidden: true,
+                                filterable: false
+                            },
+                            {
+                                field: "BranchCode",
+                                title: "@T("Admin.Omni_Backoffice.PrintingPaper.Fields.BranchCode")",
+                                editor: SetBranchDropDownEditor,
+                                template: '#=getBranchName(BranchCode) #',
+                                width: 170,
+                                filterable: false
+                            }, {
+                                field: "Year",
+                                title: "@T("Admin.Omni_Backoffice.PrintingPaper.Fields.Year")",
+                                editor: SetYearDropDownEditor,
+                                width: 100,
+                                filterable: false
+                            }, {
+                                field: "Term",
+                                title: "@T("Admin.Omni_Backoffice.PrintingPaper.Fields.Term")",
+                                editor: SetTermDropDownEditor,
+                                template: '#=getTermName(Term) #',
+                                width: 100,
+                                filterable: false
+                            }, {
+                                field: "Course",
+                                title: "@T("Admin.Omni_Backoffice.PrintingPaper.List.Course")",
+                                width: 100,
+                                filterable: false
+                            }, {
+                                field: "TestNo",
+                                title: "@T("Admin.Omni_Backoffice.PrintingPaper.Fields.TestNo")",
+                                width: 100,
+                                format: '{0:n0}'
+
+                            }, {
+                                field: "Qty",
+                                title: "@T("Admin.Omni_Backoffice.PrintingPaper.Fields.Qty")",
+                                width: 100,
+                                format: '{0:n0}'
+                            }, {
+                                field: "Qty_Teacher",
+                                title: "@T("Admin.Omni_Backoffice.Order.Fields.Qty_Teacher")",
+                                width: 100
+                            }, {
+                                field: "YN_Print",
+                                title: "@T("Admin.Omni_Backoffice.Order.Fields.YN_Print")",
+                                editor: SetYNDropDownEditor,
+                                width: 100
+                           
+                            }, {
+
+                                command: [{
+                                    name: "edit",
+                                    text: "@T("Admin.Common.Edit")",
+                                }],
+                                width: 200,
+                                filterable: false
+                            
+                            }]
+                        });
+                    });
+                </script>
+
+                <script type="text/javascript">
+
+                    var selectedIds = [];
+                    $(document).ready(function () {
+
+                        $('#btnSearch').click(function () {
+                            var grid = $('#grid').data('kendoGrid');
+                            grid.dataSource.page(1); //new search. Set page size to 1
+                            grid.dataSource.read();
+
+
+                            return false;
+                        });
+
+                    });
+
+                   
+
+
+                    var allBranchList = [
+
+                    @for (int i = 0; i < Model.AvailableBranchCode.Count; i++)
+                    {
+                        var branch = Model.AvailableBranchCode[i];
+                        <text> { Code: "@branch.Value", Name: "@branch.Text" }  </text>
+                        if (i != Model.AvailableBranchCode.Count - 1)
+                        {
+                            <text>,</text>
+                        }
+                    }
+                    ];
+
+                    function SetBranchDropDownEditor(container, options) {
+                        $('<input required data-text-field="Name" data-value-field="Code" data-bind="value:' + options.field + '"/>')
+                            .appendTo(container)
+                            .kendoDropDownList({
+                                autoBind: false,
+                                dataSource: allBranchList
+                            });
+                    }
+                    function getBranchName(branch) {
+                        for (var i = 0; i < allBranchList.length; i++) {
+                            if (allBranchList[i].Code == branch)
+                                return allBranchList[i].Name;
+                        }
+
+                        return branch;
+                    }
+
+
+
+                    var allYearList = [
+
+        @for (int i = 0; i < Model.AvailableOrderYear.Count; i++)
+                    {
+                        var year = Model.AvailableOrderYear[i];
+                        <text> { Code: "@year.Value", Name: "@year.Text" } </text>
+                        if (i != Model.AvailableOrderYear.Count - 1)
+                        {
+                            <text>,</text>
+                        }
+                    }
+                    ];
+
+                    function SetYearDropDownEditor(container, options) {
+                        $('<input required data-text-field="Name" data-value-field="Code" data-bind="value:' + options.field + '"/>')
+                            .appendTo(container)
+                            .kendoDropDownList({
+                                autoBind: false,
+                                dataSource: allYearList
+                            });
+                    }
+
+
+                    var allTermList = [
+
+        @for (int i = 0; i < Model.AvailableOrderTerm.Count; i++)
+                    {
+                        var term = Model.AvailableOrderTerm[i];
+                        <text>   { Code: "@term.Value", Name: "@term.Text" } </text>
+                        if (i != Model.AvailableOrderTerm.Count - 1)
+                        {
+                            <text>,</text>
+                        }
+                    }
+                    ];
+
+                    function SetTermDropDownEditor(container, options) {
+                        $('<input required data-text-field="Name" data-value-field="Code" data-bind="value:' + options.field + '"/>')
+                            .appendTo(container)
+                            .kendoDropDownList({
+                                autoBind: false,
+                                dataSource: allTermList
+                            });
+                    }
+                    function getTermName(term) {
+                        for (var i = 0; i < allTermList.length; i++) {
+                            if (allTermList[i].Code == term)
+                                return allTermList[i].Name;
+                        }
+
+                        return term;
+                    }
+
+                    var YNList = [{ Code: "Y", Name: "Y" }, { Code: "N", Name: "N" }];
+                    function SetYNDropDownEditor(container, options) {
+                        $('<input required data-text-field="Name" data-value-field="Code" data-bind="value:' + options.field + '"/>')
+                            .appendTo(container)
+                            .kendoDropDownList({
+                                autoBind: false,
+                                dataSource: YNList
+                            });
+                    }
+
+
+                </script>
+            </td>
+        </tr>
+    </table>
+}

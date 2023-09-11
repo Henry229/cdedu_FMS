@@ -1,0 +1,29 @@
+﻿@model Nop.Admin.Models.Omni_Printing.PrintRequestModel
+@{
+    //page title
+    ViewBag.Title = T("Admin.Omni_Printing.Request.EditDetails").Text;
+}
+@using (Html.BeginForm())
+{
+    <div class="section-header">
+        <div class="title">
+            <img src="@Url.Content("~/Administration/Content/images/ico-sales.png")" alt="" />
+            @T("Admin.Omni_Printing.Request.EditDetails") @Html.ActionLink("(" + T("Admin.Omni_Class.Classes.BackToList") + ")", "RequestList")
+        </div>
+        <div class="options">
+            @if (@Model.Status == "ST10" || ( @Model.isadmin == true && @Model.StatusVal < 30 ) )
+            { 
+                <input type="submit" name="save" class="k-button" value="@T("Admin.Common.Save")" />
+            }
+            @if (  @Model.isadmin )
+            {
+                <input type="button" id="cancel_request" class="k-button" value="Cancel Product" />
+            }
+            @if (@Model.Status == "ST40" || @Model.Status == "ST50")
+            {
+                <input type="button" id="print_invoice" class="k-button" value="Print Invoice" />
+            }
+        </div>
+    </div>
+    @Html.Partial("_CreateOrUpdateRequest", Model)
+}

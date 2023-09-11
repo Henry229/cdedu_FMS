@@ -1,0 +1,232 @@
+﻿@model Nop.Admin.Models.Omni_Item.ItemSetModel
+@{
+    var gridPageSize = 100;// EngineContext.Current.Resolve<Nop.Core.Domain.Common.AdminAreaSettings>().GridPageSize;
+
+    //page title
+    ViewBag.Title = T("Admin.Omni_Item.ItemSet_D").Text;
+    
+}
+@using (Html.BeginForm())
+{
+    <div class="section-header">
+        <div class="title">
+            <img src="@Url.Content("~/Administration/Content/images/ico-sales.png")" alt="" />
+            @T("Admin.ItemSet")
+            @Html.ActionLink("(" + T("Admin.Omni_Item.ItemSet.BackToList") + ")", "ItemSetList")
+        </div>
+    </div>
+    <table width="100%">
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.Id):
+            </td>
+            <td class="adminData">
+                @Html.TextBoxFor(model => model.Id, new { @readonly = "readonly" })
+            </td>
+        </tr>
+        <tr>
+            
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.SetName):
+            </td>
+            <td class="adminData">
+                @Html.TextBoxFor(model => model.SetName, new { @readonly = "readonly" })
+            </td>
+        </tr>
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.Term):
+            </td>
+            <td class="adminData">
+                @Html.DropDownListFor(model => model.Term, Model.AvailableTermList, new { @class = "adminInput", @disabled = "disabled" })
+            </td>
+        </tr>
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.Grade):
+            </td>
+            <td class="adminData">
+                @Html.DropDownListFor(model => model.Grade, Model.AvailableGradeList, new { @class = "adminInput", @disabled = "disabled" })
+            </td>
+        </tr>
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.SetCategory):
+            </td>
+            <td class="adminData">
+                @Html.DropDownListFor(model => model.SetCategory, Model.AvailableSetCategoryList, new { @class = "adminInput", @disabled = "disabled" })
+            </td>
+        </tr>
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.Level):
+            </td>
+            <td class="adminData">
+                @Html.DropDownListFor(model => model.Level, Model.AvailableLevelList, new { @class = "adminInput", @disabled = "disabled" })
+            </td>
+        </tr>
+
+    </table>
+    <p>
+    </p>
+    <table class="adminContent">
+        <tr>
+            <td>
+                <div id="itemsetds-grid"></div>
+
+                <script>
+
+
+
+                    $(document).ready(function () {
+                        $("#itemsetds-grid").kendoGrid({
+                            dataSource: {
+                                type: "json",
+                                transport: {
+                                    read: {
+                                        url: "@Html.Raw(Url.Action("GetItemSet_DList", "Omni_Item"))",
+                                        type: "POST",
+                                        dataType: "json"
+                                    },
+                                    update: {
+                                        url:"@Html.Raw(Url.Action("ItemSet_DUpdate", "Omni_Item"))",
+                                        type: "POST",
+                                        dataType: "json"
+                                    },
+                                    parameterMap: function(data, operation) {
+                                        if (operation != "read") {
+                                            return data;
+                                        } else {
+                                            //for some reasons only such "Filter" data be parsed
+                                            return  {Id: "@Model.Id", Term:"@Model.Term", Grade:"@Model.Grade"};
+                                        }
+                                    }
+                                },
+                                autoSync : true,
+                                schema: {
+                                    data: "Data",
+                                    total: "Total",
+                                    errors: "Errors",
+                                    model: {
+                                        id: "Id",
+                                        fields: {
+                                            Set_Id: { editable: false, type: "int" },
+                                            SEQ: { editable: true, type: "int" },
+                                            ItemCode: { editable: false, type: "string" },
+                                            ItemName: { editable: false, type: "string" },
+                                            Level: { editable: false, type: "string" },
+                                            Included : { editable: true, type: "boolean" },
+                                            Remarks: { editable: true, type: "string" },
+                                        }
+                                    },
+                                },
+                                requestEnd: function (e) {
+                                    if (e.type == "update") {
+                                        this.read();
+                                    }
+                                },
+                                error: function(e) {
+                                    display_kendoui_grid_error(e);
+                                    // Cancel the changes
+                                    this.cancelChanges();
+                                },
+                                pageSize: @(gridPageSize),
+                                serverPaging: true
+                            },
+                            pageable: {
+                                refresh: true
+                            },
+                            sortable: true,
+                            editable: {
+                                confirmation: false,
+                                mode: "incell"
+                            },
+                            batch : false,
+                            scrollable: false,
+
+                            columns: [{
+                                field: "Set_Id",
+                                title: "@T("Admin.Omni_Backoffice.Item.Fields.Set_Id")",
+                                hidden : true
+                            },{
+                                field: "SEQ",
+                                title: "@T("Admin.Omni_Backoffice.Item.Fields.SEQ")"
+                            },{
+                                field: "ItemCode",
+                                title: "@T("Admin.Omni_Backoffice.Item.Fields.ItemCode")",
+                                width: 150,
+                            }, {
+                                field: "ItemName",
+                                title: "@T("Admin.Omni_Backoffice.Item.Fields.ItemName")",
+                                width: 300,
+                            }, {
+                                field: "Level",
+                                title: "@T("Admin.Omni_Backoffice.Item.Fields.Level")",
+                                template: '#=getLevelName(Level) #',
+                                width: 150,
+                            }, {
+                                field: "Included",
+                                title: "@T("Admin.Omni_Backoffice.ItemSet_D.List.Included")",
+                                template: "<input type='checkbox' #= Included ? checked='checked' : '' # disabled='disabled' ></input>",
+                                width: 100,
+                            }, {
+                                field: "Remarks",
+                                title: "@T("Admin.Omni_Backoffice.ItemSet.Fields.Remarks")",
+                            }, {
+                                field: "Id",
+                                title: "@T("Admin.Omni_Backoffice.ItemSet.Fields.Id")",
+                                hidden : true
+                            }],
+                        });
+                    });
+                </script>
+                <script type="text/javascript">
+
+    $(document).ready(function () {
+
+        $('#btnSearch').click(function () {
+            var grid = $('#itemsetds-grid').data('kendoGrid');
+            grid.dataSource.page(1); //new search. Set page size to 1
+            grid.dataSource.read();
+            return false;
+        });
+    });
+
+
+                    
+    var allLevelList = [
+
+@for (int i = 0; i < Model.AvailableLevelList.Count; i++)
+    {
+        var level = Model.AvailableLevelList[i];
+        <text>
+        {
+            Code: "@level.Value",
+            Name: "@level.Text"
+        }
+        </text>
+        if (i != Model.AvailableLevelList.Count - 1)
+        {
+            <text>,</text>
+        }
+    }
+    ];
+
+
+    function getLevelName(level)
+    {
+        for ( var i = 0; i < allLevelList.length; i++)
+        {
+            if ( allLevelList[i].Code == level)
+                return allLevelList[i].Name;
+        }
+
+        return level;
+    }
+
+
+</script>
+                    </td>
+                </tr>
+            </table>
+}

@@ -1,0 +1,342 @@
+﻿@using Nop.Services.Omni_Backoffice
+@model Nop.Admin.Models.Omni_Basis.CalendarMasterModel
+@{
+    var gridPageSize = 65536;
+
+    //page title
+    ViewBag.Title = T("Admin.Omni_Basis.CalendarMaster").Text;
+}
+<div class="section-header">
+    <div class="title">
+        <img src="@Url.Content("~/Administration/Content/images/ico-configuration.png")" alt="" />
+        @T("Admin.Omni_Basis.CalendarMaster")
+    </div>
+</div>
+<table class="adminContent">
+    <tr>
+        <td>
+            @T("Admin.Omni_Basis.CalendarMaster.Description")
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <div id="settings-grid"></div>
+
+            <script>
+    kendo.culture("en-AU");
+    $(document).ready(function () {
+        $("#settings-grid").kendoGrid({
+            dataSource: {
+                type: "json",
+                transport: {
+                    read: {
+                        url: "@Html.Raw(Url.Action("CalendarMaster", "Omni_Basis"))",
+                        type: "POST",
+                        dataType: "json",
+                        contentType: "application/json"
+                    },
+                    create: {
+                        url: "@Html.Raw(Url.Action("CalendarMasterInsert", "Omni_Basis"))",
+                        type: "POST",
+                        dataType: "json"
+                    },
+                    update: {
+                        url:"@Html.Raw(Url.Action("CalendarMasterUpdate", "Omni_Basis"))",
+                        type: "POST",
+                        dataType: "json"
+                    },
+                    destroy: {
+                        url: "@Html.Raw(Url.Action("CalendarMasterDelete", "Omni_Basis"))",
+                                    type: "POST",
+                                    dataType: "json"
+                                },
+                                parameterMap: function(data, operation) {
+                                    if (operation != "read") {
+                                        var d = new Date(data.StartDate);
+                                        var d2 = new Date(data.EndDate);
+                                        var d3 = new Date(data.reg_date);
+                                        data.StartDate = kendo.toString(new Date(d), "yyyy-MM-dd");
+                                        data.EndDate = kendo.toString(new Date(d2), "yyyy-MM-dd");
+                                        data.reg_date = kendo.toString(new Date(d3), "yyyy-MM-dd");
+                                        return data;
+                                    } else {
+                                        //for some reasons only such "Filter" data be parsed
+                                        //return JSON.stringify(data);
+                                        return {  // 조회조건을 추가
+                                            Year:  $('#@Html.FieldIdFor(model => model.Year)').val(),
+                                            Term:  $('#@Html.FieldIdFor(model => model.Term)').val()
+                                        };
+                                        data.command.pageSize = 100;
+                                    }
+                                }
+                            },
+                            schema: {
+                                data: "Data",
+                                total: "Total",
+                                errors: "Errors",
+                                model: {
+                                    id: "Id",
+                                    fields: {
+                                        Year: { editable: true, type: "string" },
+                                        Term: { editable: true, type: "string" },
+                                        Week: { editable: true, type: "int" },
+                                        /*
+                                        StartDate: { editable: true, type: "datetime" },
+                                        EndDate: { editable: true, type: "datetime" },
+                                        reg_date: { editable: true, type: "datetime" },
+                                        */
+                                        StartDate: { editable: true, type: "date" },
+                                        EndDate: { editable: true, type: "date" },
+                                        YN_Active : { editable: true, type: "string" },
+                                        YN_PA : { editable: true, type: "string" },
+                                        YN_Enrol : { editable: true, type: "string" },
+                                        reg_date: { editable: true, type: "date" },
+                                        //reg_source: { editable: true, type: "string" },
+                                        Remarks: { editable: true, type: "string" }
+                                    }
+                                }
+                            },
+                            requestEnd: function (e) {
+                                if (e.type == "create" || e.type == "update") {
+                                    this.read();
+                                }
+                            },
+                            error: function (e) {
+                                display_kendoui_grid_error(e);
+                                // Cancel the changes
+                                this.cancelChanges();
+                            },
+                            pageSize: 65536,
+                serverPaging: true,
+                serverFiltering: true,
+                serverSorting: true
+            },
+            sortable: true,
+            toolbar: ["create"],
+            editable: {
+                confirmation: false,
+                //mode: "inline"
+                mode: "popup"
+            },
+            filterable: {
+                extra: false,
+                operators: {
+                    string: {
+                        contains: "Contains",
+                        eq: "Is equal to"
+                    }
+                }
+            },
+            scrollable: false,
+            columns: [{
+                field: "Year",
+                title: "@T("Admin.Omni_Backoffice.CalendarMaster.Fields.Year")",
+                width: 80,
+                filterable: true,
+                sortable: false,
+                editor : YearDropDownEditor,
+                template: '#=getYearName(Year) #'
+            }, {
+                field: "Term",
+                title: "@T("Admin.Omni_Backoffice.CalendarMaster.Fields.Term")",
+                width: 80,
+                filterable: true,
+                sortable: false,
+                editor : TermDropDownEditor,
+                template: '#=getTermName(Term) #'
+            }, {
+                field: "Week",
+                title: "@T("Admin.Omni_Backoffice.CalendarMaster.Fields.Week")",
+                width: 80,
+                filterable: true,
+                sortable: false
+            }, {
+                field: "StartDate",
+                title: "@T("Admin.Omni_Backoffice.CalendarMaster.Fields.StartDate")",
+                type: "date",
+                //template: "#= kendo.toString(StartDate, 'yyyy/MM/dd') #",
+                format: "{0:dd/MM/yyyy}",
+                width: 150,
+                filterable: true,
+                sortable: false
+            }, {
+                field: "EndDate",
+                title: "@T("Admin.Omni_Backoffice.CalendarMaster.Fields.EndDate")",
+                format: "{0:dd/MM/yyyy}",
+                width: 150,
+                filterable: true,
+                sortable: false
+            },{
+                field: "YN_Active",
+                title: "@T("Admin.Omni_Backoffice.CalendarMaster.Fields.YN_Active")",
+                editor: SetYNDropDownEditor1,
+                width: 50,
+                filterable: true,
+                sortable: false
+            },{
+                field: "YN_PA",
+                title: "@T("Admin.Omni_Backoffice.CalendarMaster.Fields.YN_PA")",
+                editor: SetYNDropDownEditor2,
+                width: 50,
+                filterable: true,
+                sortable: false
+            },{
+                field: "YN_Enrol",
+                title: "@T("Admin.Omni_Backoffice.CalendarMaster.Fields.YN_Enrol")",
+                editor: SetYNDropDownEditor3,
+                width: 50,
+                filterable: true,
+                sortable: false
+            },{
+                field: "reg_date",
+                title: "@T("Admin.Omni_Backoffice.CalendarMaster.Fields.reg_date")",
+                format: "{0:dd/MM/yyyy}",
+                width: 150,
+                filterable: true,
+                sortable: false
+            },{
+                field: "Remarks",
+                title: "@T("Admin.Omni_Backoffice.CalendarMaster.Fields.Remarks")",
+                //editor: YNDropDownEditor,
+                //template: "#:Store#",
+                width: 50,
+                filterable: true,
+                sortable: false
+            },
+                {
+                    command: [{
+                        name: "edit",
+                        text: "@T("Admin.Common.Edit")"
+                    }, {
+                        name: "destroy",
+                        text: "@T("Admin.Common.Delete")"
+                    }],
+                    width: 200,
+                    filterable: false
+                }]
+        });
+    });
+
+                var YNList = [{ Code: "Y", Name: "Y" }, { Code: "N", Name: "N" }];
+                function SetYNDropDownEditor1(container, options) {
+                    $('<input required data-text-field="Name" data-value-field="Code" data-bind="value:' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            autoBind: false,
+                            dataSource: YNList
+                        });
+                }
+
+                function SetYNDropDownEditor2(container, options) {
+                    $('<input required data-text-field="Name" data-value-field="Code" data-bind="value:' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            autoBind: false,
+                            dataSource: YNList
+                        });
+                }
+
+                function SetYNDropDownEditor3(container, options) {
+                    $('<input required data-text-field="Name" data-value-field="Code" data-bind="value:' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            autoBind: false,
+                            dataSource: YNList
+                        });
+                }
+            </script>
+
+            <script type="text/javascript">
+
+                $(document).ready(function () {
+
+                    $('#btnSearch').click(function () {
+                        var grid = $('#itemsets-grid').data('kendoGrid');
+                        grid.dataSource.page(1); //new search. Set page size to 1
+                        grid.dataSource.read();
+                        return false;
+                    });
+                });
+
+                var allYearList = [
+
+                @for (int i = 0; i < Model.AvailableYear.Count; i++)
+                {
+                    var term = Model.AvailableYear[i];
+                    <text>
+                                {
+                                    Code: "@term.Value",
+                                    Name: "@term.Text"
+                                }
+                                </text>
+                    if (i != Model.AvailableYear.Count - 1)
+                    {
+                        <text>,</text>
+                    }
+                }
+                ];
+
+                function YearDropDownEditor(container, options) {
+                    $('<input required data-text-field="Name" data-value-field="Code" data-bind="value:'+options.field+'"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            autoBind: false,
+                            dataSource: allYearList
+                        });
+                }
+
+                function getYearName(year)
+                {
+                    for ( var i = 0; i < allYearList.length; i++)
+                    {
+                        if ( allYearList[i].Code == year)
+                            return allYearList[i].Name;
+                    }
+
+                    return year;
+                }
+
+                var allTermList = [
+
+                @for (int i = 0; i < Model.AvailableTerm.Count; i++)
+    {
+        var term = Model.AvailableTerm[i];
+        <text>
+                    {
+                        Code: "@term.Value",
+                        Name: "@term.Text"
+                    }
+                    </text>
+        if (i != Model.AvailableTerm.Count - 1)
+        {
+            <text>,</text>
+        }
+    }
+                ];
+
+                function TermDropDownEditor(container, options) {
+                    $('<input required data-text-field="Name" data-value-field="Code" data-bind="value:'+options.field+'"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            autoBind: false,
+                            dataSource: allTermList
+                        });
+                }
+
+                function getTermName(term)
+                {
+                    for ( var i = 0; i < allTermList.length; i++)
+                    {
+                        if ( allTermList[i].Code == term)
+                            return allTermList[i].Name;
+                    }
+
+                    return term;
+                }
+
+
+            </script>
+
+        </td>
+    </tr>
+</table>

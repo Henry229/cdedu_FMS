@@ -1,0 +1,386 @@
+﻿@model Nop.Admin.Models.Omni_Item.ItemSetModel
+@{
+    var gridPageSize = EngineContext.Current.Resolve<Nop.Core.Domain.Common.AdminAreaSettings>().GridPageSize;
+
+    //page title
+    ViewBag.Title = T("Admin.Omni_Item.ItemSet").Text;
+}
+@using (Html.BeginForm())
+{
+
+    <div class="section-header">
+        <div class="title">
+            <img src="@Url.Content("~/Administration/Content/images/ico-sales.png")" alt="" />
+            @T("Admin.ItemSet")
+        </div>
+
+
+    </div>
+    <table width="100%">
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.Term):
+            </td>
+            <td class="adminData">
+                @Html.DropDownListFor(model => model.Term, Model.AvailableTermList, new { @class = "adminInput" })
+            </td>
+        </tr>
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.Grade):
+            </td>
+            <td class="adminData">
+                @Html.DropDownListFor(model => model.Grade, Model.AvailableGradeList, new { @class = "adminInput" })
+            </td>
+        </tr>
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.SetCategory):
+            </td>
+            <td class="adminData">
+                @Html.DropDownListFor(model => model.SetCategory, Model.AvailableSetCategoryList, new { @class = "adminInput" })
+            </td>
+        </tr>
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.SetName):
+            </td>
+            <td class="adminData">
+                @Html.EditorFor(model => model.SetName);
+            </td>
+        </tr>
+
+        <tr>
+            <td colspan="2">
+                <input type="button" id="btnSearch" class="k-button" value="@T("Admin.Common.Search")" />
+            </td>
+        </tr>
+    </table>
+    <p>
+    </p>
+    <style type="text/css">
+        .k-grid table tr.k-grid-edit-row {
+            background: gold;
+            color: black;
+        }
+    </style>
+    <table class="adminContent">
+        <tr>
+            <td>
+                <div id="itemsets-grid"></div>
+
+                <script>
+                    $(document).ready(function () {
+                        $("#itemsets-grid").kendoGrid({
+                            dataSource: {
+                                type: "json",
+                                transport: {
+                                    read: {
+                                        url: "@Html.Raw(Url.Action("GetItemSetList", "Omni_Item"))",
+                                        type: "POST",
+                                        dataType: "json"
+                                        //data: additionalData   
+                                    },
+                                    create: {
+                                        url: "@Html.Raw(Url.Action("ItemSetInsert", "Omni_Item"))",
+                                        type: "POST",
+                                        dataType: "json"
+                                    },
+                                    update: {
+                                        url:"@Html.Raw(Url.Action("ItemSetUpdate", "Omni_Item"))",
+                                        type: "POST",
+                                        dataType: "json"
+                                    },
+                                    destroy: {
+                                        url: "@Html.Raw(Url.Action("ItemSetDelete", "Omni_Item"))",
+                                        type: "POST",
+                                        dataType: "json"
+                                    },
+                                    parameterMap: function(data, operation) {
+                                        if (operation != "read") {
+                                            return data;
+                                        } else {
+                                            return {  // 조회조건을 추가
+                                                SetCategory:  $('#@Html.FieldIdFor(model => model.SetCategory)').val(),  
+                                                Term:  $('#@Html.FieldIdFor(model => model.Term)').val(),
+                                                Grade: $('#@Html.FieldIdFor(model => model.Grade)').val(),
+                                                SetName: $('#@Html.FieldIdFor(model => model.SetName)').val()
+                                            };
+                                            data.command.pageSize = 100;
+                                        }
+                                    }
+                                },
+                                autoSync: false,
+                                schema: {
+                                    data: "Data",
+                                    total: "Total",
+                                    errors: "Errors",
+                                    model: {
+                                        id: "Id",
+                                        fields: {
+                                            SetName: { editable: true, type: "string" },
+                                            SetCategory: { editable: true, type: "string" },
+                                            Grade: { editable: true, type: "string" },
+                                            Term: { editable: true, type: "string" },
+                                            Level: { editable: true, type: "string" },
+                                            Remarks: { editable: true, type: "string" },
+                                            ItemCnt: { editable: false, type: "number" },
+                                            id: { editable: false, type: "number" }
+                                        }
+                                    }
+                                },
+                                requestEnd: function (e) {
+                                    if (e.type == "create" || e.type == "update") {
+                                        this.read();
+                                    }
+                                },
+                                error: function(e) {
+                                    display_kendoui_grid_error(e);
+                                    // Cancel the changes
+                                    this.cancelChanges();
+                                },
+                                
+                                serverPaging: true,
+                                serverFiltering: true,
+                                serverSorting: true,
+                                PageSize: 60
+                            },
+                            toolbar: ["create"],
+                            editable: {
+                                confirmation: false,
+                                mode: "inline"
+                            },
+                            scrollable: false,
+                            autobind: false,
+                            columns: [{
+                                field: "SetName",
+                                title: "@T("Admin.Omni_Backoffice.ItemSet.Fields.SetName")"
+                            }, {
+                                field: "SetCategory",
+                                title: "@T("Admin.Omni_Backoffice.ItemSet.Fields.SetCategory")",
+                                editor : SetCategoryDropDownEditor,
+                                template: '#=getCategoryName(SetCategory) #'
+                            }, {
+                                field: "Grade",
+                                title: "@T("Admin.Omni_Backoffice.ItemSet.Fields.Grade")",
+                                editor : GradeDropDownEditor,
+                                template: '#=getGradeName(Grade) #'
+                            }, {
+                                field: "Term",
+                                title: "@T("Admin.Omni_Backoffice.ItemSet.Fields.Term")",
+                                editor : TermDropDownEditor,
+                                template: '#=getTermName(Term) #'
+                            }, {
+
+                                field: "Level",
+                                title: "@T("Admin.Omni_Backoffice.ItemSet.Fields.Level")",
+                                editor : LevelDropDownEditor,
+                                template: '#=getLevelName(Level) #'
+                            }, {
+                                field: "Remarks",
+                                title: "@T("Admin.Omni_Backoffice.ItemSet.Fields.Remarks")",
+                                width: 100
+                            }, {
+                                field: "ItemCnt",
+                                title: "@T("Admin.Omni_Backoffice.ItemSet.List.ItemCnt")",
+                                width: 100,
+                                editable : false
+                            }, {
+                                field: "Id",
+                                title: "@T("Admin.Omni_Backoffice.ItemSet.Fields.Id")",
+                                hidden : true
+
+                            }, {
+                                command: [{
+                                            name: "edit",
+                                            text: "@T("Admin.Common.Edit")",
+                                            }, {
+                                            name: "destroy",
+                                            text: "@T("Admin.Common.Delete")"
+                                        }],
+                                    width: 200,
+                                    filterable: false
+                            },{
+
+                                field: "edit",
+                                title: "Edit Detail",
+                                width: 100,
+                                template: '<a href="EditItemSet_D/#=Id#">Edit Detail</a>',
+                                editor : "<label>Edit Detail</label>",
+                                editable: false
+                            }]
+                        });
+                    });
+                </script>
+
+                <script type="text/javascript">
+
+    $(document).ready(function () {
+
+        $('#btnSearch').click(function () {
+            var grid = $('#itemsets-grid').data('kendoGrid');
+            grid.dataSource.page(1); //new search. Set page size to 1
+            grid.dataSource.read();
+            return false;
+        });
+    });
+
+
+
+    var allCategoryList = [
+
+        @for (int i = 0; i < Model.AvailableSetCategoryList.Count; i++)
+        {
+            var category = Model.AvailableSetCategoryList[i];
+            <text>
+            {
+                Code: "@category.Value",
+                Name: "@category.Text"
+            }
+            </text>
+            if (i != Model.AvailableSetCategoryList.Count - 1)
+            {
+                    <text>,</text>
+            }
+        }
+    ];
+
+    function SetCategoryDropDownEditor(container, options) {
+        $('<input required data-text-field="Name" data-value-field="Code" data-bind="value:'+options.field+'"/>')
+            .appendTo(container)
+            .kendoDropDownList({
+                autoBind: false,
+                dataSource: allCategoryList
+            });
+    }
+    function getCategoryName(setcategory)
+    {
+        for ( var i = 0; i < allCategoryList.length; i++)
+        {
+            if ( allCategoryList[i].Code == setcategory)
+                return allCategoryList[i].Name;
+        }
+
+        return setcategory;
+    }
+
+    var allGradeList = [
+
+@for (int i = 0; i < Model.AvailableGradeList.Count; i++)
+    {
+        var grade = Model.AvailableGradeList[i];
+        <text>
+        {
+            Code: "@grade.Value",
+            Name: "@grade.Text"
+        }
+        </text>
+        if (i != Model.AvailableGradeList.Count - 1)
+        {
+            <text>,</text>
+        }
+    }
+    ];
+
+
+    function GradeDropDownEditor(container, options) {
+        $('<input required data-text-field="Name" data-value-field="Code" data-bind="value:'+options.field+'"/>')
+            .appendTo(container)
+            .kendoDropDownList({
+                autoBind: false,
+                dataSource: allGradeList
+            });
+    }
+    function getGradeName(grade)
+    {
+        for ( var i = 0; i < allGradeList.length; i++)
+        {
+            if ( allGradeList[i].Code == grade)
+                return allGradeList[i].Name;
+        }
+
+        return grade;
+    }
+
+    var allLevelList = [
+
+@for (int i = 0; i < Model.AvailableLevelList.Count; i++)
+    {
+        var level = Model.AvailableLevelList[i];
+        <text>
+        {
+            Code: "@level.Value",
+            Name: "@level.Text"
+        }
+        </text>
+        if (i != Model.AvailableLevelList.Count - 1)
+        {
+            <text>,</text>
+        }
+    }
+    ];
+
+    function LevelDropDownEditor(container, options) {
+        $('<input required data-text-field="Name" data-value-field="Code" data-bind="value:'+options.field+'"/>')
+            .appendTo(container)
+            .kendoDropDownList({
+                autoBind: false,
+                dataSource: allLevelList
+            });
+    }
+    function getLevelName(level)
+    {
+        for ( var i = 0; i < allLevelList.length; i++)
+        {
+            if ( allLevelList[i].Code == level)
+                return allLevelList[i].Name;
+        }
+
+        return level;
+    }
+
+
+
+    var allTermList = [
+
+@for (int i = 0; i < Model.AvailableTermList.Count; i++)
+    {
+        var term = Model.AvailableTermList[i];
+        <text>
+        {
+            Code: "@term.Value",
+            Name: "@term.Text"
+        }
+        </text>
+        if (i != Model.AvailableTermList.Count - 1)
+        {
+            <text>,</text>
+        }
+    }
+    ];
+
+    function TermDropDownEditor(container, options) {
+        $('<input required data-text-field="Name" data-value-field="Code" data-bind="value:'+options.field+'"/>')
+            .appendTo(container)
+            .kendoDropDownList({
+                autoBind: false,
+                dataSource: allTermList
+            });
+    }
+    
+    function getTermName(term)
+    {
+        for ( var i = 0; i < allTermList.length; i++)
+        {
+            if ( allTermList[i].Code == term)
+                return allTermList[i].Name;
+        }
+
+        return term;
+    }
+
+</script>
+            </td>
+        </tr>
+    </table>
+}

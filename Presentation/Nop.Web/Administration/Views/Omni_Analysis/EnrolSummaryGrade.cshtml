@@ -1,0 +1,294 @@
+﻿@model Nop.Admin.Models.Omni_Analysis.EnrolSummaryModel
+@{
+    var gridPageSize = EngineContext.Current.Resolve<Nop.Core.Domain.Common.AdminAreaSettings>().GridPageSize;
+
+    //page title
+    ViewBag.Title = T("Admin.Omni_analysis.StudentSummaryGrade").Text;
+}
+@using (Html.BeginForm())
+{
+    <div class="section-header">
+        <div class="title">
+            <img src="@Url.Content("~/Administration/Content/images/ico-sales.png")" alt="" />
+            @T("Admin.Omni_Analysis.StudentSummaryT2T")
+        </div>
+
+    </div>
+    <table width="100%">
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.Year1):
+            </td>
+            <td class="adminData">
+                @Html.DropDownListFor(model => model.Year1, Model.AvailableYear1, new { @class = "adminInput" })
+            </td>
+        </tr>
+
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.Year2):
+            </td>
+            <td class="adminData">
+                @Html.DropDownListFor(model => model.Year2, Model.AvailableYear2, new { @class = "adminInput" })
+            </td>
+        </tr>
+
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.Branch):
+            </td>
+            <td class="adminData">
+                @Html.DropDownListFor(model => model.Branch, Model.AvailableBranch, new { @class = "adminInput" })
+            </td>
+        </tr>
+
+        <tr>
+            <td colspan="2">
+                <input type="button" id="btnSearch" class="k-button" value="@T("Admin.Common.Search")" />
+            </td>
+        </tr>
+
+    </table>
+    <p>
+    </p>
+    <table class="adminContent">
+        @Html.ValidationSummary()
+        <tr>
+            <td>
+                <div id="js-legend" class="chart-legend"></div>
+                <canvas id="myChart" width="800" height="400"></canvas>
+                <script src="/Scripts/Chart.min.js"></script>
+                <style>
+                    .chart-legend li span {
+                        display: inline-block;
+                        width: 12px;
+                        height: 12px;
+                        margin-right: 5px;
+                    }
+
+                    .chart-legend ul {
+                        list-style-type: none;
+                    }
+                </style>
+
+
+
+
+
+                <script type="text/javascript">
+
+    $(document).ready(function () {
+
+        $('#btnSearch').click(function () {
+
+            drawchart();
+
+        });
+
+
+
+    });
+
+    var options = {
+        //Boolean - Whether the scale should start at zero, or an order of magnitude down from the lowest value
+        scaleBeginAtZero: true,
+
+        //Boolean - Whether grid lines are shown across the chart
+        scaleShowGridLines: true,
+
+        //String - Colour of the grid lines
+        scaleGridLineColor: "rgba(0,0,0,.05)",
+
+        //Number - Width of the grid lines
+        scaleGridLineWidth: 1,
+
+        //Boolean - Whether to show horizontal lines (except X axis)
+        scaleShowHorizontalLines: true,
+
+        //Boolean - Whether to show vertical lines (except Y axis)
+        scaleShowVerticalLines: true,
+
+        //Boolean - If there is a stroke on each bar
+        barShowStroke: true,
+
+        //Number - Pixel width of the bar stroke
+        barStrokeWidth: 2,
+
+        //Number - Spacing between each of the X value sets
+        barValueSpacing: 5,
+
+        //Number - Spacing between data sets within X values
+        barDatasetSpacing: 1,
+
+        //String - A legend template
+        legendTemplate: "<ul class=\"<%=name.toLowerCase()%>-legend\"><% for (var i=0; i<datasets.length; i++){%><li><span style=\"background-color:<%=datasets[i].fillColor%>\"></span><%if(datasets[i].label){%><%=datasets[i].label%><%}%></li><%}%></ul>"
+
+    }
+
+    //default data
+    var lablenames = [];
+    lablenames[0] = "Term1 - " + $('#@Html.FieldIdFor(model => model.Year1)').val();
+    lablenames[1] = "Term1 - " + $('#@Html.FieldIdFor(model => model.Year2)').val();
+    lablenames[2] = "Term2 - " + $('#@Html.FieldIdFor(model => model.Year1)').val();
+    lablenames[3] = "Term2 - " + $('#@Html.FieldIdFor(model => model.Year2)').val();
+    lablenames[4] = "Term3 - " + $('#@Html.FieldIdFor(model => model.Year1)').val();
+    lablenames[5] = "Term3 - " + $('#@Html.FieldIdFor(model => model.Year2)').val();
+    lablenames[6] = "Term4 - " + $('#@Html.FieldIdFor(model => model.Year1)').val();
+    lablenames[7] = "Term4 - " + $('#@Html.FieldIdFor(model => model.Year2)').val();
+
+    var defchartdatasets = [];
+    var defdata = {
+        labels: lablenames,
+        datasets: defchartdatasets
+    };
+
+    var ctx = document.getElementById("myChart").getContext("2d");
+
+    var myBarChart = new Chart(ctx).Bar(defdata, options);
+
+    function drawchart() {
+
+        Chart.defaults.global.animation = true;
+
+
+
+        var chartdatasets = [];
+
+
+        var year1 = $('#@Html.FieldIdFor(model => model.Year1)').val();
+        var year2 = $('#@Html.FieldIdFor(model => model.Year2)').val();
+        var branch = $('#@Html.FieldIdFor(model => model.Branch)').val();
+
+
+        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+        $.getJSON("@Url.Action("GetEnrolSummaryGradeData")" + "?year1=" + year1 + "&year2=" + year2 + "&branch=" + branch, function (data2) {
+
+            lablenames[0] = "Term1 - " + $('#@Html.FieldIdFor(model => model.Year1)').val();
+            lablenames[1] = "Term1 - " + $('#@Html.FieldIdFor(model => model.Year2)').val();
+            lablenames[2] = "Term2 - " + $('#@Html.FieldIdFor(model => model.Year1)').val();
+            lablenames[3] = "Term2 - " + $('#@Html.FieldIdFor(model => model.Year2)').val();
+            lablenames[4] = "Term3 - " + $('#@Html.FieldIdFor(model => model.Year1)').val();
+            lablenames[5] = "Term3 - " + $('#@Html.FieldIdFor(model => model.Year2)').val();
+            lablenames[6] = "Term4 - " + $('#@Html.FieldIdFor(model => model.Year1)').val();
+            lablenames[7] = "Term4 - " + $('#@Html.FieldIdFor(model => model.Year2)').val();
+
+
+            var tempcnt = 0;
+
+            for (var i = 0; i < data2.length; i++) {
+                if (i == 0) {
+                    chartdatasets[i] = {
+                        label: "Year K",
+                        fillColor: "rgba(220,220,220,0.8)",
+                        strokeColor: "rgba(220,220,220,1)",
+                        highlightFill: "rgba(220,220,220,1)",
+                        highlightStroke: "rgba(220,220,220,1)",
+                        data: data2[i]
+                    };
+                }
+                if (i == 1) {
+                    chartdatasets[i] = {
+                        label: "Year 1",
+                        fillColor: "rgba(151,187,205,0.8)",
+                        strokeColor: "rgba(151,187,205,1)",
+                        highlightFill: "rgba(151,187,205,1)",
+                        highlightStroke: "rgba(151,187,205,1)",
+                        data: data2[i]
+                    };
+                }
+                if (i == 2) {
+                    chartdatasets[i] = {
+                        label: "Year 2",
+                        fillColor: "rgba(205,187,100,0.8)",
+                        strokeColor: "rgba(205,187,100,1)",
+                        highlightFill: "rgba(205,187,100,1)",
+                        highlightStroke: "rgba(205,187,100,1)",
+                        data: data2[i]
+                    };
+                }
+                if (i == 3) {
+                    chartdatasets[i] = {
+                        label: "Year 3",
+                        fillColor: "rgba(000,204,000,0.8)",
+                        strokeColor: "rgba(000,204,000,1)",
+                        highlightFill: "rgba(000,204,000,1)",
+                        highlightStroke: "rgba(000,204,000,1)",
+                        data: data2[i]
+                    };
+                }
+                if (i == 4) {
+                    chartdatasets[i] = {
+                        label: "Year 4",
+                        fillColor: "rgba(102,000,102,0.8)",
+                        strokeColor: "rgba(102,000,102,1)",
+                        highlightFill: "rgba(102,000,102,1)",
+                        highlightStroke: "rgba(102,000,102,1)",
+                        data: data2[i]
+                    };
+                }
+                if (i == 5) {
+                    chartdatasets[i] = {
+                        label: "Year 5",
+                        fillColor: "rgba(204,051,051,0.8)",
+                        strokeColor: "rgba(204,051,051,1)",
+                        highlightFill: "rgba(204,051,051,1)",
+                        highlightStroke: "rgba(204,051,051,1)",
+                        data: data2[i]
+                    };
+                }
+                if (i == 6) {
+                    chartdatasets[i] = {
+                        label: "Year 6",
+                        fillColor: "rgba(255,153,051,0.8)",
+                        strokeColor: "rgba(255,153,051,1)",
+                        highlightFill: "rgba(255,153,051,1)",
+                        highlightStroke: "rgba(255,153,051,1)",
+                        data: data2[i]
+                    };
+                }
+
+
+            }
+
+
+            var data = {
+                labels: lablenames,
+                datasets: chartdatasets
+            };
+
+            myBarChart.clear();
+            myBarChart.destroy();
+
+            myBarChart = new Chart(ctx).Bar(data, options);
+
+            var legend = myBarChart.generateLegend();
+            document.getElementById("js-legend").innerHTML = legend;
+
+            myBarChart.update();
+
+        });
+
+    }
+
+
+
+    var allBranchList = [
+
+    @for (int i = 0; i < Model.AvailableBranch.Count; i++)
+                    {
+                        var branch = Model.AvailableBranch[i];
+                        <text> { Code: "@branch.Value", Name: "@branch.Text" }  </text>
+                        if (i != Model.AvailableBranch.Count - 1)
+                        {
+                            <text>,</text>
+                        }
+                    }
+    ];
+
+
+</script>
+            </td>
+        </tr>
+    </table>
+}

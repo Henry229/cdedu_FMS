@@ -1,0 +1,684 @@
+﻿@model Nop.Admin.Models.Omni_Printing.PrintRequestModel
+@using Nop.Core.Domain.Omni_Printing;
+@Html.ValidationSummary(false)
+@Html.HiddenFor(model => model.Id)
+@Html.HiddenFor(model => model.RequestItem.Id)
+@Html.HiddenFor(model => model.Quotation.Id)
+
+<div id="request-edit">
+    <ul>
+        <li @Html.RenderSelectedTabIndex(0, GetSelectedTabIndex())>
+            @T("Admin.Request.Info")
+        </li>
+        @if (Model.Id > 0 && Model.Status != "ST10")
+        {
+            <li @Html.RenderSelectedTabIndex(1, GetSelectedTabIndex())>
+                @T("Admin.Request.Quotation")
+            </li>
+        }
+    </ul>
+    <div>
+        @TabInfo()
+    </div>
+
+
+    @if (Model.Id > 0 && Model.Status != "ST10")
+    {
+        <div>
+            @TabQuote()
+        </div>
+    }
+</div>
+<script>
+    $(document).ready(function() {
+        $("#request-edit").kendoTabStrip({
+            animation:  {
+                open: {
+                    effects: "fadeIn"
+                }
+            },
+            select: tabstrip_on_tab_select
+        });
+    });
+</script>
+
+
+<script type="text/javascript">
+
+    $(document).ready(function () {
+
+
+    });
+
+
+
+    var allStatusList = [
+
+    @for (int i = 0; i < Model.AvailableStatus.Count; i++)
+    {
+        var item = Model.AvailableStatus[i];
+        <text> { Code: "@item.Value", Name: "@item.Text" } </text>
+        if (i != Model.AvailableStatus.Count - 1)
+        { <text>,</text> }
+        }
+    ];
+
+
+    function getStatusName(status)
+    {
+        for ( var i = 0; i < allStatusList.length; i++)
+        {
+            if ( allStatusList[i].Code == status)
+                return allStatusList[i].Name;
+        }
+
+        return status;
+    }
+
+
+</script>
+
+
+
+
+
+
+@*save selected tab index*@
+<input type="hidden" id="selected-tab-index" name="selected-tab-index" value="@(GetSelectedTabIndex())">
+
+@helper TabInfo()
+{
+   
+
+    <table class="adminContent">
+        <tr>
+        <tr>
+            <td colspan="2" align="right">
+                @if (@Model.Status == "ST10")
+                {
+                    <input type="button" id="confirm_request" class="k-button" value="Confirm Request" />
+                }
+            </td>
+
+        </tr>
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.Status):
+            </td>
+            <td class="adminData">
+                @Html.DropDownList("Status", Model.AvailableStatus, new { @class = "adminInput", @disabled = "disabled" })
+            </td>
+        </tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.Title):
+            </td>
+            <td class="adminData">
+                @Html.TextBoxFor(model => model.Title)
+            </td>
+        </tr>
+
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.ReqDate):
+            </td>
+
+            <td class="adminData">
+                
+                @Html.TextBoxFor(model => model.ReqDate, new { @class = "adminInput", @disabled = "disabled", @readonly = "readonly" })
+            </td>
+        </tr>
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.DueDate):
+            </td>
+            <td class="adminData">
+
+                @Html.EditorFor(model => model.DueDate)
+            </td>
+        </tr>
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.ContentText):
+            </td>
+            <td class="adminData">
+                @Html.TextAreaFor(model => model.ContentText, new { style = "width: 400px; height: 200px;" })
+            </td>
+        </tr>
+       
+    </table>
+
+
+
+    <table class="adminContent" id="requestitem">
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.RequestItem.Item_Type):
+            </td>
+            <td class="adminData">
+                @Html.DropDownListFor(model => model.RequestItem.Item_Type, Model.RequestItem.AvailableItemType, new { @class = "adminInput" })
+            </td>
+        </tr>
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.RequestItem.PrintSize):
+            </td>
+            <td class="adminData">
+                @Html.DropDownListFor(model => model.RequestItem.PrintSize, Model.RequestItem.AvailableSize, new { @class = "adminInput" })
+            </td>
+        </tr>
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.RequestItem.PrintGsm):
+            </td>
+            <td class="adminData">
+                @Html.DropDownListFor(model => model.RequestItem.PrintGsm, Model.RequestItem.AvailableGsm, new { @class = "adminInput" })
+            </td>
+        </tr>
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.RequestItem.PrintColor):
+            </td>
+            <td class="adminData">
+                @Html.DropDownListFor(model => model.RequestItem.PrintColor, Model.RequestItem.AvailableColor, new { @class = "adminInput" })
+            </td>
+        </tr>
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.RequestItem.PrintDocStyle):
+            </td>
+            <td class="adminData">
+                @Html.DropDownListFor(model => model.RequestItem.PrintDocStyle, Model.RequestItem.AvailableDocStyle, new { @class = "adminInput" })
+            </td>
+        </tr>
+        
+    </table>
+
+    <script type="text/javascript">
+    $(document).ready(function () {
+
+        $('#ReqDate').prop('readOnly', true);
+
+        var itemtype = $('#@Html.FieldIdFor(model => model.RequestItem.Item_Type)').val();
+
+        setoptionCombo(itemtype);
+
+        $(function(){
+            $("#RequestItem_Item_Type").change(function () {
+
+                var itemtype = $('#@Html.FieldIdFor(model => model.RequestItem.Item_Type)').val();
+
+                setoptionCombo(itemtype);
+
+
+            });
+        });
+
+        $('#confirm_request').click(function () {
+            var requestId = $("#@Html.FieldIdFor(model => model.Id)").val();
+
+            window.location.replace("/Admin/Omni_Printing/ConfirmRequest/"+requestId);
+        });
+
+        $('#confirm_quotation').click(function () {
+
+            if ($('#approval').is(":checked"))
+            {
+                var requestId = $("#@Html.FieldIdFor(model => model.Id)").val();
+                window.location.replace("/Admin/Omni_Printing/ConfirmQuotation/"+requestId);
+            }
+            else
+            {
+                alert("Check the checkbox to confirm this quotation.");
+            }
+        });
+
+        $('#print_request').click(function () {
+            var requestId = $("#@Html.FieldIdFor(model => model.Id)").val();
+
+            window.location.replace("/Admin/Omni_Printing/PrintRequest/"+requestId);
+        });
+
+        $('#complete_request').click(function () {
+            var requestId = $("#@Html.FieldIdFor(model => model.Id)").val();
+
+            window.location.replace("/Admin/Omni_Printing/CompleteRequest/"+requestId);
+        });
+
+        $('#cancel_request').click(function () {
+            var requestId = $("#@Html.FieldIdFor(model => model.Id)").val();
+
+            window.location.replace("/Admin/Omni_Printing/CancelRequest/"+requestId);
+        });
+
+        $('#print_invoice').click(function (e) {
+            e.preventDefault();
+            //redirect to required URL
+            setLocation('@(Url.Action("PdfInvoice", "Omni_Printing"))?reqid=' + $('#@Html.FieldIdFor(model => model.Id)').val()  );
+            return false;
+        });
+
+    });
+
+
+    function setoptionCombo(itemtype) {
+
+        if (itemtype == 0)
+            return;
+
+        var cursize = $('#@Html.FieldIdFor(model => model.RequestItem.PrintSize)').val();
+        var curgsm = $('#@Html.FieldIdFor(model => model.RequestItem.PrintGsm)').val();
+        var curcolor = $('#@Html.FieldIdFor(model => model.RequestItem.PrintColor)').val();
+        var curdocstyle = $('#@Html.FieldIdFor(model => model.RequestItem.PrintDocStyle)').val();
+
+
+        var optionstring1 = "";
+        $.getJSON("@Url.Action("GetOptionList")" + "?itemtype=" + itemtype + "&option=SIZE", function (data) {
+            $.each(data,function(index,item){
+                if (item.Spec_Id == cursize)
+                {
+                    optionstring1 += "<option value='" + item.Spec_Id + "' selected='true'>" + item.Specification + "  </option>";
+                }
+                else{
+                    optionstring1 += "<option value='" + item.Spec_Id + "'>" + item.Specification + "</option>";
+                }
+            });
+            if (optionstring1 == "") optionstring1 = "<option value='0' ' selected='true'> NO OPTION </option>";
+            $("#RequestItem_PrintSize").html(optionstring1);
+        });
+
+        var optionstring2 = "";
+        $.getJSON("@Url.Action("GetOptionList")" + "?itemtype=" + itemtype + "&option=GSM", function (data) {
+            $.each(data,function(index,item){
+                if (item.Spec_Id == curgsm)
+                {
+                    optionstring2 += "<option value='" + item.Spec_Id + "' selected='true'>" + item.Specification + "  </option>";
+                }
+                else{
+                    optionstring2 += "<option value='" + item.Spec_Id + "'>" + item.Specification + "</option>";
+                }
+            });
+            if (optionstring2 == "") optionstring2 = "<option value='0' ' selected='true'> NO OPTION </option>";
+            $("#RequestItem_PrintGsm").html(optionstring2);
+        });
+
+        var optionstring3 = "";
+        $.getJSON("@Url.Action("GetOptionList")" + "?itemtype=" + itemtype + "&option=COLOR", function (data) {
+            $.each(data,function(index,item){
+                if (item.Spec_Id == curcolor)
+                {
+                    optionstring3 += "<option value='" + item.Spec_Id + "' selected='true'>" + item.Specification + "  </option>";
+                }
+                else{
+                    optionstring3 += "<option value='" + item.Spec_Id + "'>" + item.Specification + "</option>";
+                }
+            });
+            if (optionstring3 == "") optionstring3 = "<option value='0' ' selected='true'> NO OPTION </option>";
+            $("#RequestItem_PrintColor").html(optionstring3);
+        });
+
+
+        var optionstring4 = "";
+        $.getJSON("@Url.Action("GetOptionList")" + "?itemtype=" + itemtype + "&option=DOCSTYLE", function (data) {
+            $.each(data,function(index,item){
+                if (item.Spec_Id == curdocstyle)
+                {
+                    optionstring4 += "<option value='" + item.Spec_Id + "' selected='true'>" + item.Specification + "  </option>";
+                }
+                else{
+                    optionstring4 += "<option value='" + item.Spec_Id + "'>" + item.Specification + "</option>";
+                }
+            });
+            if (optionstring4 == "") optionstring4 = "<option value='0' ' selected='true'> NO OPTION </option>";
+            $("#RequestItem_PrintDocStyle").html(optionstring4);
+        });
+
+    }
+
+
+    </script>
+    
+    
+    
+    
+    if (Model.RequestItem.Id > 0)
+    {
+        <div>
+            <div id="productpictures-grid"></div>
+
+            <script>
+                $(document).ready(function () {
+                    $("#productpictures-grid").kendoGrid({
+                        dataSource: {
+                            type: "json",
+                            transport: {
+                                read: {
+                                    url: "@Html.Raw(Url.Action("PrintPictureList", "Omni_Printing", new { requestitemId = Model.RequestItem.Id }))",
+                                    type: "POST",
+                                    dataType: "json"
+                                },
+                                destroy: {
+                                    url: "@Html.Raw(Url.Action("PrintPictureDelete", "Omni_Printing"))",
+                                    type: "POST",
+                                    dataType: "json"
+                                }
+                            },
+                            schema: {
+                                data: "Data",
+                                total: "Total",
+                                errors: "Errors",
+                                model: {
+                                    id: "Id",
+                                    fields: {
+                                        PictureUrl: {editable: false, type: "string" }
+                                    }
+                                }
+                            },
+                            requestEnd: function(e) {
+                                if(e.type=="update") {
+                                    this.read();
+                                }
+                            },
+                            error: function(e) {
+                                display_kendoui_grid_error(e);
+                                // Cancel the changes
+                                this.cancelChanges();
+                            },
+                            serverPaging: true,
+                            serverFiltering: true,
+                            serverSorting: true
+                        },
+                        pageable: {
+                            refresh: true,
+                            numeric: false,
+                            previousNext: false,
+                            info: false
+                        },
+                        editable: {
+                            confirmation: false,
+                            mode: "inline"
+                        },
+                        scrollable: false,
+                        columns: [{
+                            field: "PictureUrl",
+                            title: "@T("Admin.Catalog.Products.Pictures.Fields.Picture")",
+                            template: '<a href="#=PictureUrl#" target="_blank"><img alt="#=PictureId#" src="#=PictureUrl#" width="150" /><a/>',
+                            width: 200
+                        }, {
+                            command: [ {
+                                name: "destroy",
+                                text: "@T("Admin.Common.Delete")"
+                            }],
+                            width: 200
+                        }]
+                    });
+                });
+            </script>
+        </div>
+        <p>
+            <strong>To add an image</strong><br /> 1.Upload a file <br />2.Push the add image button
+        </p>
+        <script type="text/javascript">
+
+            $(document).ready(function () {
+                $('#addProductPicture').click(function () {
+                    var pictureId = $("#@Html.FieldIdFor(model => model.RequestItem.PictureId)").val();
+
+                    if (pictureId == 0) {
+                        alert('Upload picture first');
+                        return;
+                    }
+
+                    $('#addProductPicture').attr('disabled', true);
+                    $.ajax({
+                        cache:false,
+                        type: "POST",
+                        url: "@(Url.Action("PrintPictureAdd", "Omni_Printing"))",
+                        data: { "PictureId": pictureId, "ItemId": @Model.RequestItem.Id },
+                        success: function (data) {
+                            var productpicturesGrid = $("#productpictures-grid");
+                            productpicturesGrid.data('kendoGrid').dataSource.read();
+                            $('#addProductPicture').attr('disabled', false);
+                        },
+                        error:function (xhr, ajaxOptions, thrownError){
+                            alert('Failed to add product picture.');
+                            $('#addProductPicture').attr('disabled', false);
+                        }
+                    });
+                });
+            });
+        </script>
+        <table class="adminContent">
+            <tr>
+                <td class="adminTitle">
+                    @Html.NopLabelFor(model => model.RequestItem.PictureId):
+                </td>
+                <td class="adminData">
+                    @Html.EditorFor(model => model.RequestItem.PictureId)
+                </td>
+            </tr>
+
+            <tr>
+                <td colspan="2" align="left">
+                    <input type="button" id="addProductPicture" class="k-button" value="Add Image" />
+                </td>
+            </tr>
+
+        </table>
+    }
+    else
+    {
+        @T("Admin.Catalog.Products.Pictures.SaveBeforeEdit")
+    }
+
+
+}
+
+@helper TabQuote()  // TabQuote
+{
+
+    <table class="adminContent" id="quotation">
+@if (@Model.Status == "ST25")
+{
+        <tr>
+
+        <td colspan="2" align="left">
+
+            <string>Hereby, I confirm this quotation and this image. And I approve to proceed printing task.</string> <input type="checkbox" id="approval" value="false" />
+
+        </td>
+        </tr>
+        <tr>
+            <td colspan="2" align="left">
+
+                    <input type="button" id="confirm_quotation" class="k-button" value="Confirm Quotation" />
+    
+            </td>
+        </tr>
+
+}
+@if (@Model.Status == "ST30")
+{
+    <tr>
+        <td colspan="2" align="left">
+
+            <input type="button" id="print_request" class="k-button" value="Print Product" />
+
+        </td>
+    </tr>
+
+}
+@if (@Model.Status == "ST40")
+{
+    <tr>
+        <td colspan="2" align="left">
+
+            <input type="button" id="complete_request" class="k-button" value="Complete Product" />
+
+        </td>
+    </tr>
+
+}
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.Quotation.Due_Date):
+            </td>
+            <td class="adminData">
+
+                @Html.EditorFor(model => model.Quotation.Due_Date)
+            </td>
+        </tr>
+        <tr>
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.Quotation.ContentText):
+            </td>
+            <td class="adminData">
+                @Html.TextAreaFor(model => model.Quotation.ContentText, new { style = "width: 400px; height: 200px;" })
+            </td>
+        </tr>
+        </tr>
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.Quotation.Quot_Amount):
+            </td>
+            <td class="adminData">
+
+                @Html.EditorFor(model => model.Quotation.Quot_Amount)
+            </td>
+        </tr>
+
+
+    </table>
+
+
+    if (Model.Quotation.Id > 0)
+    {
+        <div>
+            <div id="qtpictures-grid"></div>
+
+            <script>
+                $(document).ready(function () {
+                    $("#qtpictures-grid").kendoGrid({
+                        dataSource: {
+                            type: "json",
+                            transport: {
+                                read: {
+                                    url: "@Html.Raw(Url.Action("QuotationPictureList", "Omni_Printing", new { quotationId = Model.Quotation.Id }))",
+                                    type: "POST",
+                                    dataType: "json"
+                                },
+                                destroy: {
+                                    url: "@Html.Raw(Url.Action("QuotationPictureDelete", "Omni_Printing"))",
+                                    type: "POST",
+                                    dataType: "json"
+                                }
+                            },
+                            schema: {
+                                data: "Data",
+                                total: "Total",
+                                errors: "Errors",
+                                model: {
+                                    id: "Id",
+                                    fields: {
+                                        PictureUrl: {editable: false, type: "string" }
+                                    }
+                                }
+                            },
+                            requestEnd: function(e) {
+                                if(e.type=="update") {
+                                    this.read();
+                                }
+                            },
+                            error: function(e) {
+                                display_kendoui_grid_error(e);
+                                // Cancel the changes
+                                this.cancelChanges();
+                            },
+                            serverPaging: true,
+                            serverFiltering: true,
+                            serverSorting: true
+                        },
+                        pageable: {
+                            refresh: true,
+                            numeric: false,
+                            previousNext: false,
+                            info: false
+                        },
+                        editable: {
+                            confirmation: false,
+                            mode: "inline"
+                        },
+                        scrollable: false,
+                        columns: [{
+                            field: "PictureUrl",
+                            title: "@T("Admin.Catalog.Products.Pictures.Fields.Picture")",
+                            template: '<a href="#=PictureUrl#" target="_blank"><img alt="#=PictureId#" src="#=PictureUrl#" width="150" /><a/>',
+                            width: 200
+                        }, {
+                            command: [ {
+                                name: "destroy",
+                                text: "@T("Admin.Common.Delete")"
+                            }],
+                            width: 200
+                        }]
+                    });
+                });
+            </script>
+        </div>
+        <p>
+            <strong>To add an image</strong><br /> 1.Upload a file <br />2.Push the add image button
+        </p>
+        <script type="text/javascript">
+
+            $(document).ready(function () {
+                $('#addQtPicture').click(function () {
+                    var pictureId = $("#@Html.FieldIdFor(model => model.Quotation.PictureId)").val();
+
+                    if (pictureId == 0) {
+                        alert('Upload picture first');
+                        return;
+                    }
+
+                    $('#addQtPicture').attr('disabled', true);
+                    $.ajax({
+                        cache:false,
+                        type: "POST",
+                        url: "@(Url.Action("QuotationPictureAdd", "Omni_Printing"))",
+                        data: { "PictureId": pictureId, "quotId": @Model.Quotation.Id },
+                        success: function (data) {
+                            var productpicturesGrid = $("#qtpictures-grid");
+                            productpicturesGrid.data('kendoGrid').dataSource.read();
+                            $('#addQtPicture').attr('disabled', false);
+                        },
+                        error:function (xhr, ajaxOptions, thrownError){
+                            alert('Failed to add product picture.');
+                            $('#addQtPicture').attr('disabled', false);
+                        }
+                    });
+                });
+            });
+        </script>
+        <table class="adminContent">
+            <tr>
+                <td class="adminTitle">
+                    @Html.NopLabelFor(model => model.Quotation.PictureId):
+                </td>
+                <td class="adminData">
+                    @Html.EditorFor(model => model.Quotation.PictureId)
+                </td>
+            </tr>
+
+            <tr>
+                <td colspan="2" align="left">
+                    <input type="button" id="addQtPicture" class="k-button" value="Add Image" />
+                </td>
+            </tr>
+  
+        </table>
+    }
+    else
+    {
+        @T("Admin.Catalog.Products.Pictures.SaveBeforeEdit")
+    }
+
+}

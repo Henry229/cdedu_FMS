@@ -1,0 +1,570 @@
+﻿@model Nop.Admin.Models.Omni_Class.TeacherModel
+@{
+    var gridPageSize = EngineContext.Current.Resolve<Nop.Core.Domain.Common.AdminAreaSettings>().GridPageSize;
+
+    //page title
+    ViewBag.Title = T("Admin.Omni_Class.Teachers").Text;
+}
+@using (Html.BeginForm())
+{
+    <div class="section-header">
+        <div class="title">
+            <img src="@Url.Content("~/Administration/Content/images/ico-sales.png")" alt="" />
+            @T("Admin.Omni_Class.Teachers")
+        </div>
+
+    </div>
+    <table width="100%">
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.Branch):
+            </td>
+            <td class="adminData">
+                @if (Model.is_Admin)
+                {
+                    @Html.DropDownListFor(model => model.Branch, Model.AvailableBranch, new { @class = "adminInput" })
+                }
+                else
+                {
+                    @Html.DropDownListFor(model => model.Branch, Model.AvailableBranch, new { @class = "adminInput", @disabled = "disabled" })
+                }
+            </td>
+        </tr>
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.FirstName):
+            </td>
+            <td class="adminData">
+                @Html.EditorFor(model => model.FirstName, new { @class = "adminInput" })
+            </td>
+        </tr>
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.LastName):
+            </td>
+            <td class="adminData">
+                @Html.EditorFor(model => model.LastName, new { @class = "adminInput" })
+            </td>
+        </tr>
+
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.Subject):
+            </td>
+            <td class="adminData">
+                @Html.DropDownListFor(model => model.Subject, Model.AvailableSubject, new { @class = "adminInput" })
+            </td>
+        </tr>
+
+        <tr>
+            <td colspan="2">
+                <input type="button" id="btnSearch" class="k-button" value="@T("Admin.Common.Search")" />
+            </td>
+        </tr>
+
+    </table>
+    <p>
+    </p>
+    <table class="adminContent">
+        @Html.ValidationSummary()
+        <tr>
+            <td>
+                <div id="grid"></div>
+
+                <script>
+    kendo.culture("en-AU");
+    $(document).ready(function () {
+        $("#grid").kendoGrid({
+            dataSource: {
+                type: "json",
+                transport: {
+                    read: {
+                        url: "@Html.Raw(Url.Action("GetTeacherList", "Omni_Class"))",
+                        type: "POST",
+                        dataType: "json"
+                    },
+                    create: {
+                        url: "@Html.Raw(Url.Action("TeacherInsert", "Omni_Class"))",
+                        type: "POST",
+                        dataType: "json"
+                    },
+                    update: {
+                        url: "@Html.Raw(Url.Action("TeacherUpdate", "Omni_Class"))",
+                        type: "POST",
+                        dataType: "json"
+                    },
+                    destroy: {
+                        url: "@Html.Raw(Url.Action("TeacherDelete", "Omni_Class"))",
+                        type: "POST",
+                        dataType: "json"
+                    },
+
+                    parameterMap: function (data, operation) {
+                        if (operation != "read") {
+                            return data;
+                        } else {
+                            return {
+                                Branch: $('#@Html.FieldIdFor(model => model.Branch)').val(),
+                                FirstName: $('#@Html.FieldIdFor(model => model.FirstName)').val(),
+                                LastName: $('#@Html.FieldIdFor(model => model.LastName)').val(),
+                                Subject: $('#@Html.FieldIdFor(model => model.Subject)').val()
+                            };
+                        }
+                    }
+                },
+                autoSync: false,
+                schema: {
+                    data: "Data",
+                    total: "Total",
+                    errors: "Errors",
+                    model: {
+                        id: "Id",
+                        fields: {
+                            Title: { editable: true, type: "string" },
+                            FirstName: { editable: true, type: "string" },
+                            LastName: { editable: true, type: "string" },
+                            Gender: { editable: true, type: "string" },
+                            TeacherRole: { editable: true, type: "string" },
+                            TutorRole: { editable: true, type: "string" },
+                            MarkerRole: { editable: true, type: "string" },
+                            TeachingGrade: { editable: true, type: "string" },
+                            WorkingCond: { editable: true, type: "string" },
+                            Address: { editable: true, type: "string" },
+                            Mobile: { editable: true, type: "string" },
+                            HomePhone: { editable: true, type: "string" },
+                            eMail: { editable: true, type: "string" },
+                            Branch: { editable: true, type: "string" },
+                            Remarks: { editable: true, type: "string" },
+                            Id: { editable: false, type: "number" }
+                        }
+                    }
+                },
+                requestEnd: function (e) {
+                    if (e.type == "create" || e.type == "update") {
+                        this.read();
+                    }
+                },
+                error: function (e) {
+                    display_kendoui_grid_error(e);
+                    // Cancel the changes
+                    this.cancelChanges();
+                },
+                pageSize: 10000,
+                serverPaging: false,
+                serverFiltering: false,
+                serverSorting: false
+            },
+            resizable: true,
+            toolbar: ["create","excel"],
+            excel: {
+                fileName: "Kendo UI Grid Export.xlsx",
+                proxyURL: "http://demos.telerik.com/kendo-ui/service/export",
+                filterable: true
+            },
+            editable: {
+                confirmation: false,
+                mode: "popup"
+            },
+            scrollable: false,
+            columns: [
+            {
+                field: "Id",
+                title: "ID",
+                hidden: true,
+                filterable: false
+            }, {
+                field: "Title",
+                title: "@T("Admin.Omni_Backoffice.Teacher.Fields.Title")",
+                editor: SetTitleDropDownEditor,
+                template: '#=getTitleName(Title) #',
+                width: 50,
+                filterable: false
+
+            }, {
+                field: "FirstName",
+                title: "@T("Admin.Omni_Backoffice.Teacher.Fields.FirstName")",
+                width: 170,
+                filterable: false
+            }, {
+                field: "LastName",
+                title: "@T("Admin.Omni_Backoffice.Teacher.Fields.LastName")",
+                width: 170,
+                filterable: false
+            }, {
+                field: "Gender",
+                title: "@T("Admin.Omni_Backoffice.Teacher.Fields.Gender")",
+                editor: SetGenderDropDownEditor,
+                template: '#=getGenderName(Gender) #',
+                width: 50,
+                hidden: true,
+                filterable: false
+            }, {
+                field: "TeacherRole",
+                title: "@T("Admin.Omni_Backoffice.Teacher.Fields.TeacherRole")",
+                editor: SetYNDropDownEditor1,
+                width: 30,
+                filterable: false
+            }, {
+                field: "TutorRole",
+                title: "@T("Admin.Omni_Backoffice.Teacher.Fields.TutorRole")",
+                editor: SetYNDropDownEditor2,
+                width: 30,
+                filterable: false
+            }, {
+                field: "MarkerRole",
+                title: "@T("Admin.Omni_Backoffice.Teacher.Fields.MarkerRole")",
+                editor: SetYNDropDownEditor3,
+                width: 30,
+                filterable: false
+            }, {
+                field: "TeachingGrade",
+                title: "@T("Admin.Omni_Backoffice.Teacher.Fields.TeachingGrade")",
+                editor: SetTeachingGradeDropDownEditor,
+                template: '#=getTeachingGradeName(TeachingGrade) #',
+                width: 50,
+                hidden: true,
+                filterable: false
+            }, {
+                field: "subject",
+                title: "Subject",
+                width: 100,
+                template: '<a href="/Admin/Omni_Class/TeacherSubject/#=Id#">Subject</a>',
+                editor: "<label></label>",
+                editable: false,
+                filterable: false
+            }, {
+                field: "WorkingCond",
+                title: "@T("Admin.Omni_Backoffice.Teacher.Fields.WorkingCond")",
+                editor: SetWorkingCondDropDownEditor,
+                template: '#=getWorkingCondName(WorkingCond) #',
+                width: 50,
+                filterable: false
+            }, {
+                field: "Address",
+                title: "@T("Admin.Omni_Backoffice.Teacher.Fields.Address")",
+                width: 300,
+                hidden: true,
+                filterable: false
+            }, {
+                field: "Mobile",
+                title: "@T("Admin.Omni_Backoffice.Teacher.Fields.Mobile")",
+                width: 300,
+                filterable: false
+            }, {
+                field: "HomePhone",
+                title: "@T("Admin.Omni_Backoffice.Teacher.Fields.HomePhone")",
+                width: 300,
+                filterable: false
+            }, {
+                field: "eMail",
+                title: "@T("Admin.Omni_Backoffice.Teacher.Fields.eMail")",
+                width: 300,
+                filterable: false
+
+            },{
+                field: "Remarks",
+                title: "@T("Admin.Omni_Backoffice.Teacher.Fields.Remarks")",
+                width: 200,
+                hidden: true,
+                filterable: false
+
+            }, {
+
+                command: [{
+                    name: "edit",
+                    text: "@T("Admin.Common.Edit")",
+                }, {
+                    name: "destroy",
+                    text: "@T("Admin.Common.Delete")"
+                }],
+                width: 200,
+                filterable: false
+             @if (Model.is_Admin)
+            {
+            <text> 
+            }, {
+                field: "branch",
+                title: "Branch",
+                width: 100,
+                template: '<a href="/Admin/Omni_Class/TeacherBranch/#=Id#">Branch</a>', 
+                editor: "<label></label>",
+                editable: false,
+                filterable: false
+            </text>
+            }
+
+            }, {
+                field: "career",
+                title: "Career",
+                width: 100,
+                template: '<a href="/Admin/Omni_Class/TeacherCareer/#=Id#">Career</a>',
+                editor: "<label></label>",
+                editable: false,
+                filterable: false
+            }
+            , {
+                field: "evaluate",
+                title: "Evaluate",
+                width: 100,
+                template: '<a href="/Admin/Omni_Class/Evaluation/#=Id#">Click</a>',
+                editor: "<label></label>",
+                editable: false,
+                filterable: false
+            }]
+        });
+    });
+                </script>
+
+                <script type="text/javascript">
+
+    $(document).ready(function () {
+
+        $('#btnSearch').click(function () {
+            var grid = $('#grid').data('kendoGrid');
+            grid.dataSource.page(1); //new search. Set page size to 1
+            grid.dataSource.read();
+
+        });
+
+
+
+    });
+
+
+
+
+    var allBranchList = [
+
+    @for (int i = 0; i < Model.AvailableBranch.Count; i++)
+                    {
+                        var branch = Model.AvailableBranch[i];
+                        <text> { Code: "@branch.Value", Name: "@branch.Text" }  </text>
+                        if (i != Model.AvailableBranch.Count - 1)
+                        {
+                            <text>,</text>
+                        }
+                    }
+    ];
+
+    function SetBranchDropDownEditor(container, options) {
+        $('<input required data-text-field="Name" data-value-field="Code" data-bind="value:'+options.field+'"/>')
+            .appendTo(container)
+            .kendoDropDownList({
+                autoBind: false,
+                dataSource: allBranchList
+            });
+    }
+    function getBranchName(branch)
+    {
+        for ( var i = 0; i < allBranchList.length; i++)
+        {
+            if ( allBranchList[i].Code == branch)
+                return allBranchList[i].Name;
+        }
+
+        return branch;
+    }
+
+
+    var allTitleList = [
+
+@for (int i = 0; i < Model.AvailableTitle.Count; i++)
+                    {
+                        var title = Model.AvailableTitle[i];
+                        <text> { Code: "@title.Value",Name: "@title.Text" } </text>
+                        if (i != Model.AvailableTitle.Count - 1)
+                        {
+                            <text>,</text>
+                        }
+                    }
+    ];
+
+    function SetTitleDropDownEditor(container, options) {
+        $('<input required data-text-field="Name" data-value-field="Code" data-bind="value:'+options.field+'"/>')
+            .appendTo(container)
+            .kendoDropDownList({
+                autoBind: false,
+                dataSource: allTitleList
+            });
+    }
+    function getTitleName(title)
+    {
+        for (var i = 0; i < allTitleList.length; i++)
+        {
+            if (allTitleList[i].Code == title)
+                return allTitleList[i].Name;
+        }
+
+        return title;
+    }
+
+
+    var allGenderList = [
+
+@for (int i = 0; i < Model.AvailableGender.Count; i++)
+                    {
+                        var gender = Model.AvailableGender[i];
+                        <text> {Code: "@gender.Value", Name: "@gender.Text" } </text>
+                        if (i != Model.AvailableGender.Count - 1)
+                        {
+                            <text>,</text>
+                        }
+                    }
+                    ];
+
+                    function SetGenderDropDownEditor(container, options) {
+                        $('<input required data-text-field="Name" data-value-field="Code" data-bind="value:'+options.field+'"/>')
+                            .appendTo(container)
+                            .kendoDropDownList({
+                                autoBind: false,
+                                dataSource: allGenderList
+                            });
+                    }
+
+                    function getGenderName(gender) {
+                        for (var i = 0; i < allGenderList.length; i++) {
+                            if (allGenderList[i].Code == gender)
+                                return allGenderList[i].Name;
+                        }
+
+                        return gender;
+                    }
+
+
+
+                    var allTeachingGradeList = [
+
+        @for (int i = 0; i < Model.AvailableTeachingGrade.Count; i++)
+                    {
+                        var teachinggrade = Model.AvailableTeachingGrade[i];
+                        <text> {Code: "@teachinggrade.Value", Name: "@teachinggrade.Text" } </text>
+                        if (i != Model.AvailableTeachingGrade.Count - 1)
+                        {
+                            <text>,</text>
+                        }
+                    }
+                    ];
+
+                    function SetTeachingGradeDropDownEditor(container, options) {
+                        $('<input required data-text-field="Name" data-value-field="Code" data-bind="value:'+options.field+'"/>')
+                            .appendTo(container)
+                            .kendoDropDownList({
+                                autoBind: false,
+                                dataSource: allTeachingGradeList
+                            });
+                    }
+
+                    function getTeachingGradeName(teachinggrade) {
+                        for (var i = 0; i < allTeachingGradeList.length; i++) {
+                            if (allTeachingGradeList[i].Code == teachinggrade)
+                                return allTeachingGradeList[i].Name;
+                        }
+
+                        return teachinggrade;
+                    }
+
+
+
+                    var allWorkingCondList = [
+
+        @for (int i = 0; i < Model.AvailableWorkingCond.Count; i++)
+                    {
+                        var workingcond = Model.AvailableWorkingCond[i];
+                        <text>   { Code: "@workingcond.Value", Name: "@workingcond.Text"  } </text>
+                        if (i != Model.AvailableWorkingCond.Count - 1)
+                        {
+                            <text>,</text>
+                        }
+                    }
+    ];
+
+    function SetWorkingCondDropDownEditor(container, options) {
+        $('<input required data-text-field="Name" data-value-field="Code" data-bind="value:'+options.field+'"/>')
+            .appendTo(container)
+            .kendoDropDownList({
+                autoBind: false,
+                dataSource: allWorkingCondList
+            });
+    }
+    function getWorkingCondName(workingcond)
+    {
+        for (var i = 0; i < allWorkingCondList.length; i++)
+        {
+            if (allWorkingCondList[i].Code == workingcond)
+                return allWorkingCondList[i].Name;
+        }
+
+        return workingcond;
+    }
+
+    var allWorkingCondList = [
+
+@for (int i = 0; i < Model.AvailableWorkingCond.Count; i++)
+                    {
+                        var workingcond = Model.AvailableWorkingCond[i];
+                        <text>   { Code: "@workingcond.Value", Name: "@workingcond.Text"  } </text>
+                        if (i != Model.AvailableWorkingCond.Count - 1)
+                        {
+                            <text>,</text>
+                        }
+                    }
+    ];
+
+    function SetWorkingCondDropDownEditor(container, options) {
+        $('<input required data-text-field="Name" data-value-field="Code" data-bind="value:'+options.field+'"/>')
+            .appendTo(container)
+            .kendoDropDownList({
+                autoBind: false,
+                dataSource: allWorkingCondList
+            });
+    }
+    function getWorkingCondName(workingcond)
+    {
+        for (var i = 0; i < allWorkingCondList.length; i++)
+        {
+            if (allWorkingCondList[i].Code == workingcond)
+                return allWorkingCondList[i].Name;
+        }
+
+        return workingcond;
+    }
+
+    var allYNList = [{ Code: '', Name: 'N/A' },{ Code: 'Y', Name: 'Y' }, { Code: 'N', Name: 'N' }];
+
+    function SetYNDropDownEditor1(container, options) {
+        $('<input required data-text-field="Name" data-value-field="Code" data-bind="value:' + options.field + '"/>')
+           .appendTo(container)
+           .kendoDropDownList({
+               autoBind: false,
+               dataSource: allYNList
+           });
+    }
+
+    function SetYNDropDownEditor2(container, options) {
+        $('<input required data-text-field="Name" data-value-field="Code" data-bind="value:' + options.field + '"/>')
+           .appendTo(container)
+           .kendoDropDownList({
+               autoBind: false,
+               dataSource: allYNList
+           });
+    }
+
+    function SetYNDropDownEditor3(container, options) {
+        $('<input required data-text-field="Name" data-value-field="Code" data-bind="value:' + options.field + '"/>')
+           .appendTo(container)
+           .kendoDropDownList({
+               autoBind: false,
+               dataSource: allYNList
+           });
+    }
+
+
+
+
+
+
+                </script>
+            </td>
+        </tr>
+    </table>
+}

@@ -1,0 +1,24 @@
+﻿@using Nop.Services.Omni_Backoffice
+@{
+    var gridPageSize = EngineContext.Current.Resolve<Nop.Core.Domain.Common.AdminAreaSettings>().GridPageSize;
+
+    //page title
+    ViewBag.Title = T("Admin.Omni_Basis.PageNotFound").Text;
+}
+<div class="section-header">
+    <div class="title">
+        <img src="@Url.Content("~/Administration/Content/images/ico-configuration.png")" alt="" />
+        @T("Admin.Omni_Basis.PageNotFound")
+    </div>
+    <table class="adminContent">
+        <tr>
+            <td> <h2>&nbsp;</h2></td>
+        </tr>
+        <tr>
+            <td><H2>@T("Admin.Omni_Basis.PageNotFound.Message")</H2></td>
+        </tr>
+        <tr>
+            <td><H2>@T("Admin.Omni_Basis.Contact.IT")</H2></td>
+        </tr>
+    </table>
+</div>

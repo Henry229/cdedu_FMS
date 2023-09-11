@@ -1,0 +1,302 @@
+﻿@model Nop.Admin.Models.Omni_Class.ParentModel
+@{
+    var gridPageSize = EngineContext.Current.Resolve<Nop.Core.Domain.Common.AdminAreaSettings>().GridPageSize;
+
+    //page title
+    ViewBag.Title = T("Admin.Omni_Class.Parents").Text;
+}
+@using (Html.BeginForm())
+{
+    <div class="section-header">
+        <div class="title">
+            <img src="@Url.Content("~/Administration/Content/images/ico-sales.png")" alt="" />
+            @T("Admin.Omni_Class.Parents")
+        </div>
+
+    </div>
+    <table>
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.AvailableBranchs):
+            </td>
+            <td class="adminData">
+                @if (Model.isadmin)
+                {
+                    @Html.DropDownListFor(model => model.Branch, Model.AvailableBranchs, new { @class = "adminInput" })
+                }
+                else
+                {
+                    @Html.DropDownListFor(model => model.Branch, Model.AvailableBranchs, new { @class = "adminInput", @disabled = "disabled" })
+                }
+            </td>
+        </tr>
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.FirstName):
+            </td>
+            <td class="adminData">
+                @Html.EditorFor(model => model.FirstName, new { @class = "adminInput" })
+            </td>
+        </tr>
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.LastName):
+            </td>
+            <td class="adminData">
+                @Html.EditorFor(model => model.LastName, new { @class = "adminInput" })
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2">
+                <input type="button" id="btnSearch" class="k-button" value="@T("Admin.Common.Search")" />
+            </td>
+        </tr>
+
+    </table>
+    <p>
+    </p>
+    <table class="adminContent">
+        @Html.ValidationSummary()
+        <tr>
+            <td>
+                <div id="grid"></div>
+
+                <script>
+    kendo.culture("en-AU");
+    $(document).ready(function () {
+        $("#grid").kendoGrid({
+            dataSource: {
+                type: "json",
+                transport: {
+                    read: {
+                        url: "@Html.Raw(Url.Action("GetParentList", "Omni_Class"))",
+                        type: "POST",
+                        dataType: "json"
+                    },
+                    create: {
+                        url: "@Html.Raw(Url.Action("ParentInsert", "Omni_Class"))",
+                        type: "POST",
+                        dataType: "json"
+                    },
+                    update: {
+                        url: "@Html.Raw(Url.Action("ParentUpdate", "Omni_Class"))",
+                        type: "POST",
+                        dataType: "json"
+                    },
+                    destroy: {
+                        url: "@Html.Raw(Url.Action("ParentDelete", "Omni_Class"))",
+                        type: "POST",
+                        dataType: "json"
+                    },
+
+                    parameterMap: function (data, operation) {
+                        if (operation != "read") {
+                            return data;
+                        } else {
+                            return {
+                                Branch: $('#@Html.FieldIdFor(model => model.Branch)').val(),
+                                FirstName: $('#@Html.FieldIdFor(model => model.FirstName)').val(),
+                                LastName: $('#@Html.FieldIdFor(model => model.LastName)').val()
+                            };
+                        }
+                    }
+                },
+                autoSync: false,
+                schema: {
+                    data: "Data",
+                    total: "Total",
+                    errors: "Errors",
+                    model: {
+                        id: "Id",
+                        fields: {
+                            @if(Model.isadmin)
+                        {
+                           <text> Branch: { editable: true, type: "string" },</text>
+                        }
+                        else
+                        {
+                           <text> Branch: { editable: false, type: "string", defaultValue: "@Model.Branch" },</text>
+                        }
+                            FirstName: { editable: true, type: "string" },
+                            LastName: { editable: true, type: "string" },
+                            PhoneNo: { editable: true, type: "string" },
+                            MobileNo1: { editable: true, type: "string" },
+                            MobileNo2: { editable: true, type: "string" },
+                            Email: { editable: true, type: "email", validation: { required: true } },
+                            Remarks: { editable: true, type: "string" },
+                            Id: { editable: false, type: "number" }
+                        }
+                    }
+                },
+                requestEnd: function (e) {
+                    if (e.type == "create" || e.type == "update") {
+                        this.read();
+                    }
+                },
+                error: function (e) {
+                    display_kendoui_grid_error(e);
+                    // Cancel the changes
+                    this.cancelChanges();
+                },
+                pageSize: 10000,
+                serverPaging: false,
+                serverFiltering: false,
+                serverSorting: false
+            },
+            resizable: true,
+            toolbar: ["create"],
+            editable: {
+                confirmation: false,
+                //mode: "popup"
+                mode: "inline"
+            },
+            scrollable: false,
+            columns: [
+            {
+                field: "Id",
+                title: "ID",
+                hidden: true,
+                filterable: false
+            }, {
+                field: "Branch",
+                title: "@T("Admin.Omni_Backoffice.Parent.Fields.Branch")",
+                editor: SetBranchDropDownEditor,
+                template: '#=getBranchName(Branch) #',
+                width: 150,
+                filterable: false
+            }, {
+                field: "FirstName",
+                title: "@T("Admin.Omni_Backoffice.Parent.Fields.FirstName")",
+                width: 100,
+                filterable: false
+            }, {
+                field: "LastName",
+                title: "@T("Admin.Omni_Backoffice.Parent.Fields.LastName")",
+                width: 100,
+                filterable: false
+            }, {
+                field: "PhoneNo",
+                title: "@T("Admin.Omni_Backoffice.Parent.Fields.PhoneNo")",
+                template: '#= (PhoneNo) ? formatPhone(PhoneNo) : "none" #',
+                width: 100,
+                filterable: false
+            }, {
+                field: "MobileNo1",
+                title: "@T("Admin.Omni_Backoffice.Parent.Fields.MobileNo1")",
+                template: '#= (MobileNo1) ? formatMobilePhone(MobileNo1) : "none" #',
+                width: 100,
+                filterable: false
+            }, {
+                field: "MobileNo2",
+                title: "@T("Admin.Omni_Backoffice.Parent.Fields.MobileNo2")",
+                template: '#= (MobileNo2) ? formatMobilePhone(MobileNo2) : "none" #',
+                width: 100,
+                filterable: false
+            }, {
+                field: "Email",
+                title: "@T("Admin.Omni_Backoffice.Parent.Fields.Email")",
+                width: 150,
+                filterable: false
+            }, {
+                field: "Remarks",
+                title: "@T("Admin.Omni_Backoffice.Parent.Fields.Remarks")",
+                width: 200,
+                filterable: false
+            }, {
+
+                command: [{
+                    name: "edit",
+                    text: "@T("Admin.Common.Edit")",
+                }, {
+                    name: "destroy",
+                    text: "@T("Admin.Common.Delete")"
+                }],
+                width: 200,
+                filterable: false
+
+            }, {
+                field: "edit",
+                title: "Sibling Manage",
+                width: 100,
+                template: '<a href="/Admin/Omni_Class/SiblingManage/#=Id#">Sibling Manage</a>',
+                editor: "<label></label>",
+                editable: false,
+                filterable: false
+            }]
+        });
+    });
+</script>
+
+                <script type="text/javascript">
+
+                    $(document).ready(function () {
+
+                        $('#btnSearch').click(function () {
+                            var grid = $('#grid').data('kendoGrid');
+                            grid.dataSource.page(1); //new search. Set page size to 1
+                            grid.dataSource.read();
+
+                        });
+
+
+
+                    });
+
+
+
+
+                    var allBranchList = [
+
+                    @for (int i = 0; i < Model.AvailableBranchs.Count; i++)
+                    {
+                        var branch = Model.AvailableBranchs[i];
+                        <text> { Code: "@branch.Value", Name: "@branch.Text" }  </text>
+                        if (i != Model.AvailableBranchs.Count - 1)
+                        {
+                            <text>,</text>
+                        }
+                    }
+                    ];
+
+                    function SetBranchDropDownEditor(container, options) {
+                        $('<input required data-text-field="Name" data-value-field="Code" data-bind="value:'+options.field+'"/>')
+                            .appendTo(container)
+                            .kendoDropDownList({
+                                autoBind: false,
+                                dataSource: allBranchList
+                            });
+                    }
+                    function getBranchName(branch)
+                    {
+                        for ( var i = 0; i < allBranchList.length; i++)
+                        {
+                            if ( allBranchList[i].Code == branch)
+                                return allBranchList[i].Name;
+                        }
+
+                        return branch;
+                    }
+
+                    function formatMobilePhone(Mobilephone) {
+                        var piece1 = Mobilephone.substring(0, 4); //1234
+                        var piece2 = Mobilephone.substring(4, 7); //567
+                        var piece3 = Mobilephone.substring(7); //8901
+
+                        //should return (1234)567-890
+                        return kendo.format("({0})-{1}-{2}", piece1, piece2, piece3);
+                    }
+
+                    function formatPhone(phone) {
+                        var piece1 = phone.substring(0, 2); //12
+                        var piece2 = phone.substring(2, 6); //3456
+                        var piece3 = phone.substring(6); //7890
+
+                        //should return (12)3456-7890
+                        return kendo.format("({0})-{1}-{2}", piece1, piece2, piece3);
+                    }
+
+                </script>
+            </td>
+        </tr>
+    </table>
+}

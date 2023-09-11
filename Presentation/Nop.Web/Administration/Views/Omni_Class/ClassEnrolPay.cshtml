@@ -1,0 +1,207 @@
+﻿@model Nop.Admin.Models.Omni_Class.ClassEnrolPayModel
+@{
+    var gridPageSize = EngineContext.Current.Resolve<Nop.Core.Domain.Common.AdminAreaSettings>().GridPageSize;
+
+    //page title
+    ViewBag.Title = T("Admin.Omni_Class.ClassEnrolment").Text;
+}
+@using (Html.BeginForm())
+{
+    <div class="section-header">
+        <div class="title">
+            <img src="@Url.Content("~/Administration/Content/images/ico-sales.png")" alt="" />
+            @T("Admin.Omni_Class.ClassEnrolmentPay")
+            <a href="javascript:history.go(-1)">(Back to enrolment list)</a>
+        </div>
+    </div>
+    <table width="100%">
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.Stud_Id):
+            </td>
+            <td class="adminData">
+                @Html.TextBoxFor(model => model.Stud_Id, new { @readonly = "readonly" })
+            </td>
+        </tr>
+        <tr>
+            <td class="adminTitle">
+                @Html.Label("Student"):
+            </td>
+            <td class="adminData">
+                @Html.TextBox("Student Name", Model.Stud_Name, new { @readonly = "readonly" })
+                @Html.TextBox("Grade", Model.Grade, new { @readonly = "readonly" })
+            </td>
+        </tr>
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.Id_Enrol):
+            </td>
+            <td class="adminData">
+                @Html.TextBoxFor(model => model.Id_Enrol, new { @readonly = "readonly" })
+                @Html.TextBoxFor(model => model.CourseName, new { @readonly = "readonly" })
+                @Html.TextBoxFor(model => model.TotalAmount, new { @readonly = "readonly" })
+            </td>
+        </tr>
+       
+    </table>
+    <p>
+    </p>
+    <table class="adminContent">
+        <tr>
+            <td>
+                <div id="grid"></div>
+
+                <script>
+                    kendo.culture("en-AU");
+    $(document).ready(function () {
+        $("#grid").kendoGrid({
+            dataSource: {
+                type: "json",
+                transport: {
+                    read: {
+                        url: "@Html.Raw(Url.Action("GetClassEnrolPayList", "Omni_Class"))",
+                        type: "POST",
+                        dataType: "json"
+                    },
+                    create: {
+                        url: "@Html.Raw(Url.Action("ClassEnrolPayInsert", "Omni_Class"))",
+                        type: "POST",
+                        dataType: "json"
+                    },
+                    update: {
+                        url: "@Html.Raw(Url.Action("ClassEnrolPayUpdate", "Omni_Class"))",
+                        type: "POST",
+                        dataType: "json"
+                    },
+                    destroy: {
+                        url: "@Html.Raw(Url.Action("ClassEnrolPayDelete", "Omni_Class"))",
+                        type: "POST",
+                        dataType: "json"
+                    },
+                    parameterMap: function(data, operation) {
+                        if (operation != "read") {
+                            var d = new Date(data.PayDate);
+                            data.PayDate = kendo.toString(new Date(d), "yyyy-MM-dd");
+                            return data;
+                        } else {
+                            return {
+                                Id_Enrol:  $('#@Html.FieldIdFor(model => model.Id_Enrol)').val()
+
+                                            };
+                                        }
+                                    }
+                                },
+                autoSync:false,
+                aggregate : [{ 
+                    field : "PayAmount",
+                    aggregate : "sum"
+                }],
+                                schema: {
+                                    data: "Data",
+                                    total: "Total",
+                                    errors: "Errors",
+                                    model: {
+                                        id: "Id",
+                                        fields: {
+                                            Id_Enrol : { editable: false, type: "number", defaultValue : "@Model.Id_Enrol"  },
+                                            Seq : { editable: false, type: "number"  },
+                                            PayDate : { editable: true, type: "date"  },
+                                            PayAmount : { editable: true, type: "number"  },
+                                            Remark : { editable: true, type: "string" },
+                        }
+                    }
+                },
+                requestEnd: function (e) {
+                    if (e.type == "create" || e.type == "update") {
+                        this.read();
+                    }
+                    else{
+
+                    }
+                },
+                error: function(e) {
+                    display_kendoui_grid_error(e);
+                    // Cancel the changes
+                    this.cancelChanges();
+                },
+                pageSize: @(gridPageSize),
+    serverPaging: true,
+        serverFiltering: false,
+    serverSorting: false
+    },
+    resizable : true,
+        pageable: {
+        refresh: true
+        },
+    toolbar: ["create"],
+        editable: {
+        confirmation: false,
+        mode: "inline"
+        },
+    selectable: "row",
+        scrollable: false,
+    columns: [{
+        field: "Id_Enrol",
+        title: "@T("Admin.Omni_Backoffice.ClassEnrolPay.Fields.Id_Enrol")",
+        hidden:true
+    }, {
+        field: "Seq",
+        title: "@T("Admin.Omni_Backoffice.ClassEnrolPay.Fields.Seq")"
+    }, {
+        field: "PayDate",
+        title: "@T("Admin.Omni_Backoffice.ClassEnrolPay.Fields.PayDate")",
+        template: "#= kendo.toString(PayDate, 'dd/MM/yyyy') #",
+    }, {
+        field: "PayAmount",
+        title: "@T("Admin.Omni_Backoffice.ClassEnrolPay.Fields.PayAmount")",
+        format: '{0:n2}', attributes: { style: "text-align:right;" },
+        aggregates : ["sum"],
+        footerTemplate: "<div style='float:right'>#=kendo.toString(sum, 'C')#</div>",
+    }, {
+        field: "Remark",
+        title: "@T("Admin.Omni_Backoffice.TeacherCareer.Fields.Remarks")",
+        width: 250
+    }, {
+        field: "Receipt",
+        title: "Receipt",
+        width: 100,
+        template: '<a href="/Admin/Omni_Class/ClassEnrolPay_Receipt?pay_Id=#=Id#">Receipt</a>',
+        filterable: false
+    }, {
+        field: "Id",
+        title: "@T("Admin.Omni_Backoffice.TeacherCareer.Fields.Id")",
+        hidden : true
+    },
+    {
+
+        command: [{
+            name: "edit",
+            text: "@T("Admin.Common.Edit")",
+        }, {
+            name: "destroy",
+            text: "@T("Admin.Common.Delete")"
+        }],
+        width: 200,
+        filterable:false
+    }
+    ]
+    });
+    });
+                </script>
+
+                <script type="text/javascript">
+
+    $(document).ready(function () {
+
+        $('#btnSearch').click(function () {
+            return false;
+        });
+
+    });
+
+
+                </script>
+            </td>
+        </tr>
+    </table>
+}

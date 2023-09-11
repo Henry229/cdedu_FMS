@@ -1,0 +1,213 @@
+﻿@model Nop.Admin.Models.Omni_Printing.PrintRequestModel
+@{
+    var gridPageSize = EngineContext.Current.Resolve<Nop.Core.Domain.Common.AdminAreaSettings>().GridPageSize;
+
+    //page title
+    ViewBag.Title = T("Admin.PrintRequest").Text;
+}
+@using (Html.BeginForm())
+{
+    <div class="section-header">
+        <div class="title">
+            <img src="@Url.Content("~/Administration/Content/images/ico-sales.png")" alt="" />
+            @T("Admin.PrintRequest")
+        </div>
+
+        <div class="options">
+            <a href="@Url.Action("CreateRequest")" class="k-button">@T("Admin.Common.AddNew")</a>
+        </div>
+
+    </div>
+    <table width="100%">
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.Status):
+            </td>
+            <td class="adminData">
+
+                @Html.DropDownListFor(model => model.Status, Model.AvailableStatus, new { @class = "adminInput" })
+
+            </td>
+        </tr>
+       
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.ReqDate):
+            </td>
+            <td class="adminData">
+                <input id="FromDate" /> ~ <input id="ToDate" />
+            </td>
+        </tr>
+
+        <script>
+            $("#FromDate").kendoDatePicker({
+                value: new Date(),
+                culture: "en-AU",
+                format: "dd/MM/yyyy"
+            });
+
+            $("#ToDate").kendoDatePicker({
+                value: new Date(),
+                culture: "en-AU",
+                format: "dd/MM/yyyy"
+            });
+        </script>
+
+
+
+        <tr>
+            <td colspan="2">
+                <input type="button" id="btnSearch" class="k-button" value="@T("Admin.Common.Search")" />
+            </td>
+        </tr>
+    </table>
+    <p>
+    </p>
+    <table class="adminContent">
+        <tr>
+            <td>
+                <div id="grid"></div>
+
+                <script>
+                    $(document).ready(function () {
+                        $("#grid").kendoGrid({
+                           // timezone: "Etc/UTC",
+                            dataSource: {
+                                type: "json",
+                                transport: {
+                                    read: {
+                                        url: "@Html.Raw(Url.Action("GetRequestList", "Omni_Printing"))",
+                                        type: "POST",
+                                        dataType: "json"
+                                    },
+                                    parameterMap: function(data, operation) {
+                                        if (operation == "read") {
+
+                                            var fromd = $('#@Html.FieldIdFor(model => model.FromDate)').val();
+                                            var fromd2 = fromd.substr(6, 4) + "-" + fromd.substr(3, 2) + "-" + fromd.substr(0, 2);
+
+                                            var tod = $('#@Html.FieldIdFor(model => model.ToDate)').val();
+                                            var tod2 = tod.substr(6, 4) + "-" + tod.substr(3, 2) + "-" + tod.substr(0, 2);
+
+                                            return {
+                                                Status:  $('#@Html.FieldIdFor(model => model.Status)').val(),
+                                                FromDate: fromd2,
+                                                ToDate: tod2
+                                            };
+                                        }
+                                    }
+                                },
+                                autoSync:false,
+                                schema: {
+                                    data: "Data",
+                                    total: "Total",
+                                    errors: "Errors",
+                                    model: {
+                                        id: "Id",
+                                        fields: {
+                                            ReqDate: { editable: false, type: "date" },
+                                            Status: { editable: false, type: "string" },
+                                            Title: { editable: false, type: "string" },
+                                            ContentText: { editable: false, type: "string" },
+                                        }
+                                    }
+                                },
+                                error: function(e) {
+                                    display_kendoui_grid_error(e);
+                                    // Cancel the changes
+                                    this.cancelChanges();
+                                },
+                                pageSize: @(gridPageSize),
+                                serverPaging: false,
+                                serverFiltering: false,
+                                serverSorting: false
+                            },
+                            pageable: {
+                                refresh: true
+                            },
+                            scrollable: false,
+                            columns: [{
+                                field: "ReqDate",
+                                title: "@T("Admin.Omni_Printing.PrintRequest.Fields.ReqDate")",
+                                template: "#= kendo.toString(ReqDate, 'dd/MM/yyyy') #",
+                                width: 100
+                            }, {
+                                field: "Status",
+                                title: "@T("Admin.Omni_Printing.PrintRequest.Fields.Status")",
+                                template: '#=getStatusName(Status) #',
+                                width:100
+                            }, {
+                                field: "Title",
+                                title: "@T("Admin.Omni_Printing.PrintRequest.Fields.Title")",
+                                width:100
+
+                            }
+                            , 
+                            {
+                                field: "ContentText",
+                                title: "Description",
+                                width: 100
+                            }
+                              , {
+                                  field: "Id",
+                                  title: "@T("Admin.Common.Edit")",
+                                  width: 100,
+                                  template: '<a href="EditRequest/#=Id#">@T("Admin.Common.Edit")</a>'
+                              }
+                            ]
+                        });
+                    });
+
+
+                </script>
+
+                <script type="text/javascript">
+
+    $(document).ready(function () {
+
+        $('#btnSearch').click(function () {
+            var grid = $('#grid').data('kendoGrid');
+            grid.dataSource.page(1); //new search. Set page size to 1
+            grid.dataSource.read();
+            return false;
+        });
+
+
+    });
+
+    var allStatusList = [
+
+        @for (int i = 0; i < Model.AvailableStatus.Count; i++)
+        {
+            var status = Model.AvailableStatus[i];
+            <text>
+            {
+                Code: "@status.Value",
+                Name: "@status.Text"
+            }
+            </text>
+            if (i != Model.AvailableStatus.Count - 1)
+                {
+                    <text>,</text>
+                }
+         }
+    ];
+
+
+    function getStatusName(status)
+    {
+        for ( var i = 0; i < allStatusList.length; i++)
+        {
+            if ( allStatusList[i].Code == status)
+                return allStatusList[i].Name;
+        }
+
+        return status;
+    }
+
+
+                </script>
+            </td>
+        </tr>
+    </table>
+}

@@ -1,0 +1,120 @@
+﻿@using Nop.Services.Omni_Backoffice
+@{
+    var gridPageSize = EngineContext.Current.Resolve<Nop.Core.Domain.Common.AdminAreaSettings>().GridPageSize;
+
+    //page title
+    ViewBag.Title = T("Admin.Omni_Basis.CodeMaster").Text;
+}
+<style type="text/css">
+    #map_canvas {
+        height: 100%;
+    }
+</style>
+<script type="text/javascript"
+        src="http://maps.googleapis.com/maps/api/js?AIzaSyCxRtyPGhMInG_ir0Kc5Inxpdhk8KC2ly8&sensor=FALSE">
+</script>
+<div class="section-header">
+    <div class="title">
+        <img src="@Url.Content("~/Administration/Content/images/ico-configuration.png")" alt="" />
+        @T("Admin.Omni_Basis.CodeMaster")
+    </div>
+</div>
+<table class="adminContent" height="500px" border="1" id="maptable">
+    <tr>
+        <td>
+            @T("Admin.Omni_Basis.CodeMaster.Description")
+        </td>
+    </tr>
+    <tr >
+        <td height="100%">
+            <div id="map_canvas"></div>
+
+
+
+
+            <script type="text/javascript">
+                
+                document.getElementById('maptable').height = document.documentElement.clientHeight - 350;
+
+                var mapOptions = {
+                    center: new google.maps.LatLng(-33.75, 151.0),
+                    zoom: 11,
+                    mapTypeId: google.maps.MapTypeId.ROADMAP
+                };
+                var map = new google.maps.Map(document.getElementById("map_canvas"),
+                    mapOptions);
+
+                var geocoder = new google.maps.Geocoder();
+
+                var addresslist = new Array();
+                var array = @Html.Raw(Json.Encode(@ViewBag.addresses));
+                for(var i = 0; i < array.length; i++)
+                {
+                    addresslist[i] = array[i];
+                }
+
+
+                var studentlist = new Array();
+                array = @Html.Raw(Json.Encode(@ViewBag.students));
+                for(var i = 0; i < array.length; i++)
+                {
+                    studentlist[i] = array[i];
+                }
+
+                var address = "";
+                var student = "";
+                var iconurl = "";
+
+   
+
+
+
+                for (var i = 0 ; i < array.length; i++)
+                {
+                    address = addresslist[i];
+                    student = studentlist[i];
+
+                    if ( i < 2 )
+                    {
+                        iconurl = "http://maps.google.com/mapfiles/ms/icons/red-dot.png";
+                    }
+                    else if ( i < 5 )
+                    {
+                        iconurl = "http://maps.google.com/mapfiles/ms/icons/blue-dot.png";
+                    }
+                    else if ( i < 7 )
+                    {
+                        iconurl = "http://maps.google.com/mapfiles/ms/icons/purple-dot.png";
+                    }
+                    else if ( i < 9 )
+                    {
+                        iconurl = "http://maps.google.com/mapfiles/ms/icons/yellow-dot.png";
+                    }
+                    else
+                    {
+                        iconurl = "http://maps.google.com/mapfiles/ms/icons/green-dot.png";
+                    }
+
+                    alert(student);
+                    geocoder.geocode({ 'address': address }, function (results, status) {
+                        if (status == google.maps.GeocoderStatus.OK) {
+                            //In this case it creates a marker, but you can get the lat and lng from the location.LatLng
+                            new google.maps.Marker({
+                                map: map,
+                                position: results[0].geometry.location,
+                                title: student,
+                                icon: iconurl,
+                                zIndex:i
+                            });
+                        } else {
+                            alert("Geocode was not successful for the following reason: " + status);
+                        }
+                    });
+                }
+
+                //table size
+            </script>
+        </td>
+    </tr>
+</table>
+

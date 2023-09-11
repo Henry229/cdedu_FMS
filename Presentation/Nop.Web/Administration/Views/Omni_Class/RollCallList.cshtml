@@ -1,0 +1,784 @@
+﻿@model Nop.Admin.Models.Omni_Class.ClassRollCallAccumModel
+@{
+    var gridPageSize = EngineContext.Current.Resolve<Nop.Core.Domain.Common.AdminAreaSettings>().GridPageSize;
+
+    //page title
+    ViewBag.Title = T("Admin.Omni_Class.RollCallList").Text;
+}
+@using (Html.BeginForm())
+{
+    <div class="section-header">
+        <div class="title">
+            <img src="@Url.Content("~/Administration/Content/images/ico-sales.png")" alt="" />
+            @T("Admin.Omni_Class.RollCallList")
+        </div>
+
+    </div>
+    <table width="100%">
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.Branch):
+            </td>
+            <td class="adminData">
+                @if (Model.is_admin)
+                {
+                    @Html.DropDownListFor(model => model.Branch, Model.AvailableBranchList, new { @class = "adminInput" })
+                }
+                else
+                {
+                    @Html.DropDownListFor(model => model.Branch, Model.AvailableBranchList, new { @class = "adminInput", @disabled = "disabled" })
+                }
+            </td>
+        </tr>
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.Year):
+            </td>
+            <td class="adminData">
+                @Html.DropDownListFor(model => model.Year, Model.AvailableYear, new { @class = "adminInput" })
+            </td>
+        </tr>
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.Term):
+            </td>
+            <td class="adminData">
+                @Html.DropDownListFor(model => model.Term, Model.AvailableTerm, new { @class = "adminInput" })
+            </td>
+        </tr>
+
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.Grade): @Html.Hidden("Grade");
+            </td>
+            <td class="adminData">
+                <input type="radio" name="rdoGrade" class="rdoGrade" value="YR00" onclick="document.getElementById('Grade').value = this.value;">Year K &nbsp;&nbsp;
+                <input type="radio" name="rdoGrade" class="rdoGrade" value="YR01" onclick="document.getElementById('Grade').value = this.value;">Year 1 &nbsp;&nbsp;
+                <input type="radio" name="rdoGrade" class="rdoGrade" value="YR02" onclick="document.getElementById('Grade').value = this.value;">Year 2 &nbsp;&nbsp;
+                <input type="radio" name="rdoGrade" class="rdoGrade" value="YR03" onclick="document.getElementById('Grade').value = this.value;">Year 3 &nbsp;&nbsp;
+                <input type="radio" name="rdoGrade" class="rdoGrade" value="YR04" onclick="document.getElementById('Grade').value = this.value;">Year 4 &nbsp;&nbsp;
+                <input type="radio" name="rdoGrade" class="rdoGrade" value="YR05" onclick="document.getElementById('Grade').value = this.value;" checked="true">Year 5 &nbsp;&nbsp;
+                <input type="radio" name="rdoGrade" class="rdoGrade" value="YR06" onclick="document.getElementById('Grade').value = this.value;">Year 6 &nbsp;&nbsp;
+            </td>
+
+            
+        </tr>
+
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.Class_Id):
+            </td>
+            <td class="adminData">
+                @Html.DropDownListFor(model => model.Class_Id, Model.AvailableClass, new { @class = "adminInput" })
+            </td>
+        </tr>
+
+
+
+
+        <tr>
+            <td colspan="2">
+                <input type="button" id="btnSearch" class="k-button" value="@T("Admin.Common.Search")" />
+            </td>
+
+        </tr>
+        <tr>
+            <td colspan="2">
+                <input type="button" id="btnStudentList" class="k-button" value="@T("Admin.Common.TodaysStudents")" />
+            </td>
+        </tr>
+
+    </table>
+    <p>
+    </p>
+    <style type="text/css">
+        .k-grid table tbody .k-alt {
+            background: #808080;
+        }
+
+        .k-grid table tr.k-grid-edit-row {
+            background: gold;
+            color: black;
+        }
+
+        .k-grid table tr.k-state-selected {
+            background: #f35800;
+            color: #FFF;
+        }
+    </style>
+    <table class="adminContent">
+        @Html.ValidationSummary()
+        <tr>
+            <td>
+                <div id="grid" style="width : 950px;"></div>
+
+                <script>
+    kendo.culture("en-AU");
+    $(document).ready(function () {
+        $("#grid").kendoGrid({
+            dataSource: {
+                type: "json",
+                transport: {
+                    read: {
+                        url: "@Html.Raw(Url.Action("GetRollcallList", "Omni_Class"))",
+                        type: "POST",
+                        dataType: "json"
+                    },
+                    update: {
+                        url: "@Html.Raw(Url.Action("UpdateRollcall", "Omni_Class"))",
+                        type: "POST",
+                        dataType: "json"
+                    },
+                    parameterMap: function (data, operation) {
+                        if (operation != "read") {
+                            return data;
+                        } else {
+
+                            return {
+                                Class_Id: $('#@Html.FieldIdFor(model => model.Class_Id)').val()
+                            };
+                        }
+                    }
+                },
+                aggregate: [{
+                    field: "Attend_U1",
+                    aggregate: "sum"
+                }, {
+                    field: "Attend_U2",
+                    aggregate: "sum"
+                }, {
+                    field: "Attend_U3",
+                    aggregate: "sum"
+                }, {
+                    field: "Attend_U4",
+                    aggregate: "sum"
+                }, {
+                    field: "Attend_U5",
+                    aggregate: "sum"
+                }, {
+                    field: "Attend_U6",
+                    aggregate: "sum"
+                }, {
+                    field: "Attend_U7",
+                    aggregate: "sum"
+                }, {
+                    field: "Attend_U8",
+                    aggregate: "sum"
+                }, {
+                    field: "Attend_U9",
+                    aggregate: "sum"
+                }, {
+                    field: "Attend_U10",
+                    aggregate: "sum"
+                }, {
+                    field: "Attend_U11",
+                    aggregate: "sum"
+                }, {
+                    field: "Attend_U12",
+                    aggregate: "sum"
+                },
+                ],
+                autoSync: true,
+                schema: {
+                    data: "Data",
+                    total: "Total",
+                    errors: "Errors",
+                    model: {
+                        id: "Id",
+                        fields: {
+                            Class_Id: { editable: false, type: "number" },
+                            Stud_Id: { editable: false, type: "string" },
+                            Stud_No: { editable: false, type: "string" },
+                            Stud_Name: { editable: false, type: "string" },
+                            Attend_U1: { editable: false, type: "number" },
+                            Attend2_U1: { editable: false, type: "string" },
+                            Attend_U2: { editable: false, type: "number" },
+                            Attend2_U2: { editable: false, type: "string" },
+                            Attend_U3: { editable: false, type: "number" },
+                            Attend2_U3: { editable: false, type: "string" },
+                            Attend_U4: { editable: false, type: "number" },
+                            Attend2_U4: { editable: false, type: "string" },
+                            Attend_U5: { editable: false, type: "number" },
+                            Attend2_U5: { editable: false, type: "string" },
+                            Attend_U6: { editable: false, type: "number" },
+                            Attend2_U6: { editable: false, type: "string" },
+                            Attend_U7: { editable: false, type: "number" },
+                            Attend2_U7: { editable: false, type: "string" },
+                            Attend_U8: { editable: false, type: "number" },
+                            Attend2_U8: { editable: false, type: "string" },
+                            Attend_U9: { editable: false, type: "number" },
+                            Attend2_U9: { editable: false, type: "string" },
+                            Attend_U10: { editable: false, type: "number" },
+                            Attend2_U10: { editable: false, type: "string" },
+                            Attend_U11: { editable: false, type: "number" },
+                            Attend2_U11: { editable: false, type: "string" },
+                            Attend_U12: { editable: false, type: "number" },
+                            Attend2_U12: { editable: false, type: "string" }
+                        }
+                    }
+                },
+                requestEnd: function (e) {
+                    if (e.type == "create" || e.type == "update") {
+                        this.read();
+                    }
+                },
+                error: function (e) {
+                    display_kendoui_grid_error(e);
+                    // Cancel the changes
+                    this.cancelChanges();
+                },
+                pageSize: 65536,
+                serverPaging: false,
+                serverFiltering: false,
+                serverSorting: false
+            },
+            resizable: true,
+            scrollable: false,
+            editable: {
+                confirmation: false,
+                mode: "incell"
+            },
+            selectable: "row",
+            columns: [
+            {
+                field: "Id",
+                title: "ID",
+                hidden: true,
+                filterable: false
+            }, {
+                field: "Class_Id",
+                title: "@T("Admin.Omni_Backoffice.ClassEnrol.Fields.Class_Id")",
+                editor: ClassDropDownEditor,
+                hidden: true
+            }, {
+                field: "Stud_Id",
+                title: "@T("Admin.Omni_Backoffice.Student.Fields.Stud_Id")",
+                width: 170,
+                filterable: false
+            }, {
+                field: "Stud_No",
+                title: "@T("Admin.Omni_Backoffice.Student.Fields.Stud_No")",
+                width: 170,
+                filterable: false
+            }, {
+                field: "Stud_Name",
+                title: "@T("Admin.Omni_Backoffice.Student.Fields.Stud_Name")",
+                width: 300,
+                filterable: false
+            }, {
+                field: "Attend_U1",
+                title: "@T("Admin.Omni_Backoffice.ClassScheduleRollcall.Fields.U1")",
+                template: '<img src="@Url.Content("~/Administration/Content/images/")active-#=Attend_U1#.gif" onclick=attend_u1(); /> <lable>#=Attend2_U1#</label>',
+                aggregates: ["sum"],
+                footerTemplate: "<div style='float:right'>Total : #=sum#</div>",
+                width: 50
+            }, {
+                field: "Attend2_U1",
+                title: "@T("Admin.Omni_Backoffice.ClassScheduleRollcall.Fields.U1")",
+                width: 50,
+                hidden: true
+            }, {
+                field: "Attend_U2",
+                title: "@T("Admin.Omni_Backoffice.ClassScheduleRollcall.Fields.U2")",
+                template: '<img src="@Url.Content("~/Administration/Content/images/")active-#=Attend_U2#.gif" onclick=attend_u2(); /> <lable>#=Attend2_U2#</label>',
+                aggregates: ["sum"],
+                footerTemplate: "<div style='float:right'>Total : #=sum#</div>",
+                width: 50
+            }, {
+                field: "Attend2_U2",
+                title: "@T("Admin.Omni_Backoffice.ClassScheduleRollcall.Fields.U2")",
+                width: 50,
+                hidden: true
+            }, {
+                field: "Attend_U3",
+                title: "@T("Admin.Omni_Backoffice.ClassScheduleRollcall.Fields.U3")",
+                template: '<img src="@Url.Content("~/Administration/Content/images/")active-#=Attend_U3#.gif" onclick=attend_u3(); /> <lable>#=Attend2_U3#</label>',
+                aggregates: ["sum"],
+                footerTemplate: "<div style='float:right'>Total : #=sum#</div>",
+                width: 50
+            }, {
+                field: "Attend2_U3",
+                title: "@T("Admin.Omni_Backoffice.ClassScheduleRollcall.Fields.U3")",
+                width: 50,
+                hidden: true
+            }, {
+                field: "Attend_U4",
+                title: "@T("Admin.Omni_Backoffice.ClassScheduleRollcall.Fields.U4")",
+                template: '<img src="@Url.Content("~/Administration/Content/images/")active-#=Attend_U4#.gif" onclick=attend_u4(); />',
+                aggregates: ["sum"],
+                footerTemplate: "<div style='float:right'>Total : #=sum#</div>",
+                width: 50
+            }, {
+                field: "Attend2_U4",
+                title: "@T("Admin.Omni_Backoffice.ClassScheduleRollcall.Fields.U4")",
+                width: 50,
+                hidden: true
+            }, {
+                field: "Attend_U5",
+                title: "@T("Admin.Omni_Backoffice.ClassScheduleRollcall.Fields.U5")",
+                template: '<img src="@Url.Content("~/Administration/Content/images/")active-#=Attend_U5#.gif" onclick=attend_u5(); />',
+                aggregates: ["sum"],
+                footerTemplate: "<div style='float:right'>Total : #=sum#</div>",
+                width: 50
+            }, {
+                field: "Attend2_U5",
+                title: "@T("Admin.Omni_Backoffice.ClassScheduleRollcall.Fields.U5")",
+                width: 50,
+                hidden: true
+            }, {
+                field: "Attend_U6",
+                title: "@T("Admin.Omni_Backoffice.ClassScheduleRollcall.Fields.U6")",
+                template: '<img src="@Url.Content("~/Administration/Content/images/")active-#=Attend_U6#.gif" onclick=attend_u6(); />',
+                aggregates: ["sum"],
+                footerTemplate: "<div style='float:right'>Total : #=sum#</div>",
+                width: 50
+            }, {
+                field: "Attend2_U6",
+                title: "@T("Admin.Omni_Backoffice.ClassScheduleRollcall.Fields.U6")",
+                width: 50,
+                hidden: true
+            }, {
+                field: "Attend_U7",
+                title: "@T("Admin.Omni_Backoffice.ClassScheduleRollcall.Fields.U7")",
+                template: '<img src="@Url.Content("~/Administration/Content/images/")active-#=Attend_U7#.gif" onclick=attend_u7(); />',
+                aggregates: ["sum"],
+                footerTemplate: "<div style='float:right'>Total : #=sum#</div>",
+                width: 50
+            }, {
+                field: "Attend2_U7",
+                title: "@T("Admin.Omni_Backoffice.ClassScheduleRollcall.Fields.U7")",
+                width: 50,
+                hidden: true
+            }, {
+                field: "Attend_U8",
+                title: "@T("Admin.Omni_Backoffice.ClassScheduleRollcall.Fields.U8")",
+                template: '<img src="@Url.Content("~/Administration/Content/images/")active-#=Attend_U8#.gif" onclick=attend_u8(); />',
+                aggregates: ["sum"],
+                footerTemplate: "<div style='float:right'>Total : #=sum#</div>",
+                width: 50
+            }, {
+                field: "Attend2_U8",
+                title: "@T("Admin.Omni_Backoffice.ClassScheduleRollcall.Fields.U8")",
+                width: 50,
+                hidden: true
+            }, {
+                field: "Attend_U9",
+                title: "@T("Admin.Omni_Backoffice.ClassScheduleRollcall.Fields.U9")",
+                template: '<img src="@Url.Content("~/Administration/Content/images/")active-#=Attend_U9#.gif" onclick=attend_u9(); />',
+                aggregates: ["sum"],
+                footerTemplate: "<div style='float:right'>Total : #=sum#</div>",
+                width: 50
+            }, {
+                field: "Attend2_U9",
+                title: "@T("Admin.Omni_Backoffice.ClassScheduleRollcall.Fields.U9")",
+                width: 50,
+                hidden: true
+            }, {
+                field: "Attend_U10",
+                title: "@T("Admin.Omni_Backoffice.ClassScheduleRollcall.Fields.U10")",
+                template: '<img src="@Url.Content("~/Administration/Content/images/")active-#=Attend_U10#.gif" onclick=attend_u10(); />',
+                aggregates: ["sum"],
+                footerTemplate: "<div style='float:right'>Total : #=sum#</div>",
+                width: 50
+            }, {
+                field: "Attend2_U10",
+                title: "@T("Admin.Omni_Backoffice.ClassScheduleRollcall.Fields.U10")",
+                width: 50,
+                hidden: true
+            }, {
+                field: "Attend_U11",
+                title: "@T("Admin.Omni_Backoffice.ClassScheduleRollcall.Fields.U11")",
+                template: '<img src="@Url.Content("~/Administration/Content/images/")active-#=Attend_U11#.gif" onclick=attend_u11(); />',
+                aggregates: ["sum"],
+                footerTemplate: "<div style='float:right'>Total : #=sum#</div>",
+                width: 50
+            }, {
+                field: "Attend2_U11",
+                title: "@T("Admin.Omni_Backoffice.ClassScheduleRollcall.Fields.U11")",
+                width: 50,
+                hidden: true
+            }, {
+                field: "Attend_U12",
+                title: "@T("Admin.Omni_Backoffice.ClassScheduleRollcall.Fields.U12")",
+                template: '<img src="@Url.Content("~/Administration/Content/images/")active-#=Attend_U12#.gif" onclick=attend_u12(); />',
+                aggregates: ["sum"],
+                footerTemplate: "<div style='float:right'>Total : #=sum#</div>",
+                width: 50
+            }, {
+                field: "Attend2_U12",
+                title: "@T("Admin.Omni_Backoffice.ClassScheduleRollcall.Fields.U12")",
+                width: 50,
+                hidden: true
+
+            }]
+        });
+    });
+</script>
+
+                <script type="text/javascript">
+                    kendo.culture("en-AU");
+                    $(document).ready(function () {
+                        var branch = $('#@Html.FieldIdFor(model => model.Branch)').val();
+                        var year = $('#@Html.FieldIdFor(model => model.Year)').val();
+                        var term = $('#@Html.FieldIdFor(model => model.Term)').val();
+                        var grade = $('#@Html.FieldIdFor(model => model.Grade)').val();
+                        var curval = $('#@Html.FieldIdFor(model => model.Class_Id)').val();
+
+                        setClassCombo(branch, year, term, grade, curval);
+
+                        //  $("#@Html.FieldIdFor(model => model.Id)").change(toggleItemCategory);
+                        $(function () {
+                            $("#Year").change(function () {
+
+                                var classroom = "";
+                                var year = $('#@Html.FieldIdFor(model => model.Year)').val();
+                                var term = $('#@Html.FieldIdFor(model => model.Term)').val();
+                                var grade = $('#@Html.FieldIdFor(model => model.Grade)').val();
+                                var curval = $('#@Html.FieldIdFor(model => model.Class_Id)').val();
+
+                                setClassCombo(branch, year, term, grade, curval);
+
+
+                            });
+                        });
+                        $(function () {
+                            $("#Term").change(function () {
+                                var classroom = "";
+                                var year = $('#@Html.FieldIdFor(model => model.Year)').val();
+                                var term = $('#@Html.FieldIdFor(model => model.Term)').val();
+                                var grade = $('#@Html.FieldIdFor(model => model.Grade)').val();
+                                var curval = $('#@Html.FieldIdFor(model => model.Class_Id)').val();
+
+                                setClassCombo(branch, year, term, grade, curval);
+
+                            });
+                        });
+                        $(function () {
+                            $(".rdoGrade").change(function () {
+                                var classroom = "";
+                                var year = $('#@Html.FieldIdFor(model => model.Year)').val();
+                                var term = $('#@Html.FieldIdFor(model => model.Term)').val();
+                                var grade = this.value;
+                                var curval = $('#@Html.FieldIdFor(model => model.Class_Id)').val();
+
+                                setClassCombo(branch, year, term, grade, curval);
+
+                            });
+                        });
+
+
+
+
+
+                        $('#btnSearch').click(function () {
+                            var grid = $('#grid').data('kendoGrid');
+                            grid.dataSource.page(1); //new search. Set page size to 1
+                            grid.dataSource.read();
+
+                        });
+
+
+                        $('#btnStudentList').click(function () {
+   
+                            var url = "/Admin/Omni_Class/TodayStudentList";
+                            window.open(url, '_blank');
+
+                        });
+
+                    });
+
+                    function setClassCombo(branch, year, term, grade, curval) {
+                        var classinfo = "";
+                        $.getJSON("@Url.Action("GetClassList")" + "?branch=" + branch + "&year=" + year + "&term=" + term + "&grade=" + grade, function (data) {
+                            $.each(data, function (index, item) {
+                                if (item.Id == curval) {
+                                    classinfo += "<option value='" + item.Id + "' selected='true'>" + item.Name + "  </option>";
+                                }
+                                else {
+                                    classinfo += "<option value='" + item.Id + "'>" + item.Name + "</option>";
+                                }
+                            });
+                            $("#Class_Id").html(classinfo);
+                        });
+                    }
+
+
+
+                    var allClassList = [
+
+                @for (int i = 0; i < Model.AvailableClass.Count; i++)
+    {
+        var item = Model.AvailableClass[i];
+        <text> { Code: "@item.Value", Name: "@item.Text" } </text>
+        if (i != Model.AvailableClass.Count - 1)
+        { <text>,</text> }
+        }
+                    ];
+
+                    function ClassDropDownEditor(container, options) {
+                        $('<input required data-text-field="Name" data-value-field="Code" data-bind="value:' + options.field + '"/>')
+                            .appendTo(container)
+                            .kendoDropDownList({
+                                autoBind: false,
+                                dataSource: allClassList
+                            });
+                    }
+
+                    function getClassName(class_id) {
+                        for (var i = 0; i < allClassList.length; i++) {
+                            if (allClassList[i].Code == class_id)
+                                return allClassList[i].Name;
+                        }
+
+                        return class_id;
+                    }
+
+
+                    function attend_u1()
+                    {
+                        var entityGrid = $("#grid").data("kendoGrid");
+                        var selectedItem = entityGrid.dataItem(entityGrid.select());
+                        var rownum = selectedItem.rownum;
+
+                        var curval = selectedItem.Attend_U1;
+                        
+
+                        if ( curval == "0")
+                        {
+                            selectedItem.Attend_U1 = "1";
+                        }
+                        else
+                        {
+                            selectedItem.Attend_U1 = "0";
+                        }
+
+                        entityGrid.dataSource.sync();
+                        selectedItem.dirty = true;
+                        $("#grid").data("kendoGrid").saveChanges();
+                    }
+
+                    function attend_u2() {
+                        var entityGrid = $("#grid").data("kendoGrid");
+                        var selectedItem = entityGrid.dataItem(entityGrid.select());
+                        var rownum = selectedItem.rownum;
+
+                        var curval = selectedItem.Attend_U2;
+
+
+                        if (curval == "0") {
+                            selectedItem.Attend_U2 = "1";
+                        }
+                        else {
+                            selectedItem.Attend_U2 = "0";
+                        }
+
+                        entityGrid.dataSource.sync();
+                        selectedItem.dirty = true;
+                        $("#grid").data("kendoGrid").saveChanges();
+                    }
+
+                    function attend_u3() {
+                        var entityGrid = $("#grid").data("kendoGrid");
+                        var selectedItem = entityGrid.dataItem(entityGrid.select());
+                        var rownum = selectedItem.rownum;
+
+                        var curval = selectedItem.Attend_U3;
+
+
+                        if (curval == "0") {
+                            selectedItem.Attend_U3 = "1";
+                        }
+                        else {
+                            selectedItem.Attend_U3 = "0";
+                        }
+
+                        entityGrid.dataSource.sync();
+                        selectedItem.dirty = true;
+                        $("#grid").data("kendoGrid").saveChanges();
+                    }
+
+                    function attend_u4() {
+                        var entityGrid = $("#grid").data("kendoGrid");
+                        var selectedItem = entityGrid.dataItem(entityGrid.select());
+                        var rownum = selectedItem.rownum;
+
+                        var curval = selectedItem.Attend_U4;
+
+
+                        if (curval == "0") {
+                            selectedItem.Attend_U4 = "1";
+                        }
+                        else {
+                            selectedItem.Attend_U4 = "0";
+                        }
+
+                        entityGrid.dataSource.sync();
+                        selectedItem.dirty = true;
+                        $("#grid").data("kendoGrid").saveChanges();
+                    }
+
+                    function attend_u5() {
+                        var entityGrid = $("#grid").data("kendoGrid");
+                        var selectedItem = entityGrid.dataItem(entityGrid.select());
+                        var rownum = selectedItem.rownum;
+
+                        var curval = selectedItem.Attend_U5;
+
+
+                        if (curval == "0") {
+                            selectedItem.Attend_U5 = "1";
+                        }
+                        else {
+                            selectedItem.Attend_U5 = "0";
+                        }
+
+                        entityGrid.dataSource.sync();
+                        selectedItem.dirty = true;
+                        $("#grid").data("kendoGrid").saveChanges();
+                    }
+
+                    function attend_u6() {
+                        var entityGrid = $("#grid").data("kendoGrid");
+                        var selectedItem = entityGrid.dataItem(entityGrid.select());
+                        var rownum = selectedItem.rownum;
+
+                        var curval = selectedItem.Attend_U6;
+
+
+                        if (curval == "0") {
+                            selectedItem.Attend_U6 = "1";
+                        }
+                        else {
+                            selectedItem.Attend_U6 = "0";
+                        }
+
+                        entityGrid.dataSource.sync();
+                        selectedItem.dirty = true;
+                        $("#grid").data("kendoGrid").saveChanges();
+                    }
+
+                    function attend_u7() {
+                        var entityGrid = $("#grid").data("kendoGrid");
+                        var selectedItem = entityGrid.dataItem(entityGrid.select());
+                        var rownum = selectedItem.rownum;
+
+                        var curval = selectedItem.Attend_U7;
+
+
+                        if (curval == "0") {
+                            selectedItem.Attend_U7 = "1";
+                        }
+                        else {
+                            selectedItem.Attend_U7 = "0";
+                        }
+
+                        entityGrid.dataSource.sync();
+                        selectedItem.dirty = true;
+                        $("#grid").data("kendoGrid").saveChanges();
+                    }
+
+                    function attend_u8() {
+                        var entityGrid = $("#grid").data("kendoGrid");
+                        var selectedItem = entityGrid.dataItem(entityGrid.select());
+                        var rownum = selectedItem.rownum;
+
+                        var curval = selectedItem.Attend_U1;
+
+
+                        if (curval == "0") {
+                            selectedItem.Attend_U8 = "1";
+                        }
+                        else {
+                            selectedItem.Attend_U8 = "0";
+                        }
+
+                        entityGrid.dataSource.sync();
+                        selectedItem.dirty = true;
+                        $("#grid").data("kendoGrid").saveChanges();
+                    }
+
+                    function attend_u9() {
+                        var entityGrid = $("#grid").data("kendoGrid");
+                        var selectedItem = entityGrid.dataItem(entityGrid.select());
+                        var rownum = selectedItem.rownum;
+
+                        var curval = selectedItem.Attend_U1;
+
+
+                        if (curval == "0") {
+                            selectedItem.Attend_U9 = "1";
+                        }
+                        else {
+                            selectedItem.Attend_U9 = "0";
+                        }
+
+                        entityGrid.dataSource.sync();
+                        selectedItem.dirty = true;
+                        $("#grid").data("kendoGrid").saveChanges();
+                    }
+
+                    function attend_u10() {
+                        var entityGrid = $("#grid").data("kendoGrid");
+                        var selectedItem = entityGrid.dataItem(entityGrid.select());
+                        var rownum = selectedItem.rownum;
+
+                        var curval = selectedItem.Attend_U10;
+
+
+                        if (curval == "0") {
+                            selectedItem.Attend_U10 = "1";
+                        }
+                        else {
+                            selectedItem.Attend_U10 = "0";
+                        }
+
+                        entityGrid.dataSource.sync();
+                        selectedItem.dirty = true;
+                        $("#grid").data("kendoGrid").saveChanges();
+                    }
+
+                    function attend_u11() {
+                        var entityGrid = $("#grid").data("kendoGrid");
+                        var selectedItem = entityGrid.dataItem(entityGrid.select());
+                        var rownum = selectedItem.rownum;
+
+                        var curval = selectedItem.Attend_U11;
+
+
+                        if (curval == "0") {
+                            selectedItem.Attend_U11 = "1";
+                        }
+                        else {
+                            selectedItem.Attend_U11 = "0";
+                        }
+
+                        entityGrid.dataSource.sync();
+                        selectedItem.dirty = true;
+                        $("#grid").data("kendoGrid").saveChanges();
+                    }
+
+                    function attend_u12() {
+                        var entityGrid = $("#grid").data("kendoGrid");
+                        var selectedItem = entityGrid.dataItem(entityGrid.select());
+                        var rownum = selectedItem.rownum;
+
+                        var curval = selectedItem.Attend_U12;
+
+
+                        if (curval == "0") {
+                            selectedItem.Attend_U12 = "1";
+                        }
+                        else {
+                            selectedItem.Attend_U12 = "0";
+                        }
+
+                        entityGrid.dataSource.sync();
+                        selectedItem.dirty = true;
+                        $("#grid").data("kendoGrid").saveChanges();
+                    }
+
+                </script>
+            </td>
+        </tr>
+    </table>
+}

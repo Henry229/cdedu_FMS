@@ -1,0 +1,565 @@
+﻿@using Nop.Services.Omni_Backoffice
+@model Nop.Admin.Models.Omni_Basis.CourseMasterModel
+@{
+    var gridPageSize = EngineContext.Current.Resolve<Nop.Core.Domain.Common.AdminAreaSettings>().GridPageSize;
+
+    //page title
+    ViewBag.Title = T("Admin.Omni_Basis.CourseMaster").Text;
+}
+<div class="section-header">
+    <div class="title">
+        <img src="@Url.Content("~/Administration/Content/images/ico-configuration.png")" alt="" />
+        @T("Admin.Omni_Basis.CourseMaster")
+    </div>
+</div>
+<table width="100%">
+    <tr>
+        <td class="adminTitle">
+            @Html.NopLabelFor(model => model.Year):
+        </td>
+        <td class="adminData">
+            @Html.DropDownListFor(model => model.Year, Model.AvailableYear, new { @class = "adminInput" })
+        </td>
+    </tr>
+    <tr>
+        <td class="adminTitle">
+            @Html.NopLabelFor(model => model.Term):
+        </td>
+        <td class="adminData">
+            @Html.DropDownListFor(model => model.Term, Model.AvailableTerm, new { @class = "adminInput" })
+        </td>
+    </tr>
+    <tr>
+        <td class="adminTitle">
+            @Html.NopLabelFor(model => model.Grade):
+        </td>
+        <td class="adminData">
+            @Html.DropDownListFor(model => model.Grade, Model.AvailableGrade, new { @class = "adminInput" })
+        </td>
+    </tr>
+    <tr>
+        <td class="adminTitle">
+            @Html.NopLabelFor(model => model.CourseCategory):
+        </td>
+        <td class="adminData">
+            @Html.DropDownListFor(model => model.CourseCategory, Model.AvailableCourseCategory, new { @class = "adminInput" })
+        </td>
+    </tr>
+
+    <tr>
+        <td class="adminTitle">
+            @Html.NopLabelFor(model => model.CourseName):
+        </td>
+        <td class="adminData">
+            @Html.EditorFor(model => model.CourseName);
+        </td>
+    </tr>
+
+    <tr>
+        <td colspan="2">
+            <input type="button" id="btnSearch" class="k-button" value="@T("Admin.Common.Search")" />
+        </td>
+    </tr>
+</table>
+<table class="adminContent">
+    <tr>
+        <td>
+            @T("Admin.Omni_Basis.CourseMaster.Description")
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <div id="settings-grid"></div>
+
+            <script>
+                kendo.culture("en-AU");
+                $(document).ready(function () {
+                    $("#settings-grid").kendoGrid({
+                        dataSource: {
+                            type: "json",
+                            transport: {
+                                read: {
+                                    url: "@Html.Raw(Url.Action("GetCourseMasterList", "Omni_Basis"))",
+                                    type: "POST",
+                                    dataType: "json"
+                                },
+                                create: {
+                                    url: "@Html.Raw(Url.Action("CourseMasterInsert", "Omni_Basis"))",
+                                    type: "POST",
+                                    dataType: "json"
+                                },
+                                update: {
+                                    url:"@Html.Raw(Url.Action("CourseMasterUpdate", "Omni_Basis"))",
+                                    type: "POST",
+                                    dataType: "json"
+                                },
+                                destroy: {
+                                    url: "@Html.Raw(Url.Action("CourseMasterDelete", "Omni_Basis"))",
+                                    type: "POST",
+                                    dataType: "json"
+                                },
+                                parameterMap: function(data, operation) {
+                                    if (operation != "read") {
+                                        var d = new Date(data.reg_date);
+                                        data.reg_date = kendo.toString(new Date(d), "yyyy-MM-dd");
+                                        return data;
+                                    } else {
+                                        return {
+                                            Year:  $('#@Html.FieldIdFor(model => model.Year)').val(),  
+                                            CourseCategory:  $('#@Html.FieldIdFor(model => model.CourseCategory)').val(),  
+                                            Term:  $('#@Html.FieldIdFor(model => model.Term)').val(),
+                                            Grade:  $('#@Html.FieldIdFor(model => model.Grade)').val(),
+                                            CourseName:  $('#@Html.FieldIdFor(model => model.CourseName)').val()
+                                        }
+                                        data.command.pageSize = 100;
+                                    }
+                                }
+                            },
+                            schema: {
+                                data: "Data",
+                                total: "Total",
+                                errors: "Errors",
+                                model: {
+                                    id: "Id",
+                                    fields: {
+                                        CourseName: { editable: true, type: "string" },
+                                        CourseCategory: { editable: true, type: "string" },
+                                        Year: { editable: true, type: "string" },
+                                        Term: { editable: true, type: "string" },
+                                        Grade: { editable: true, type: "string" },
+                                        Level: { editable: true, type: "string" },
+                                        StartWeek: { editable: true, type: "int" },
+                                        TotalWeek: { editable: true, type: "int" },
+                                        CourseFee: { editable: true, type: "decimal" },
+                                        Remarks: { editable: true, type: "string" },
+                                        YN_Use: { editable: true, type: "string" },
+                                        reg_date: { editable: true, type: "date" },
+                                        //reg_source: { editable: true, type: "string" }
+                                        BookFee: { editable: true, type: "decimal" },
+                                        Facility: { editable: true, type: "decimal" },
+                                        NewBookFee: { editable: true, type: "decimal" } 
+                                    }
+                                }
+                            },
+                            requestEnd: function (e) {
+                                if (e.type == "create" || e.type == "update") {
+                                    this.read();
+                                }
+                            },
+                            error: function (e) {
+                                display_kendoui_grid_error(e);
+                                // Cancel the changes
+                                this.cancelChanges();
+                            },
+                            pageSize: @(gridPageSize),
+                            serverPaging: true,
+                            serverFiltering: true,
+                            serverSorting: true
+                        },
+                        sortable: true,
+                        toolbar: ["create"],
+                        editable: {
+                            confirmation: false,
+                            //mode: "inline"
+                            mode: "popup"
+                        },
+                        scrollable: false,
+                        columns: [{
+                            field: "CourseName",
+                            title: "@T("Admin.Omni_Backoffice.CourseMaster.Fields.CourseName")",
+                            width: 80,
+                            filterable: false,
+                            sortable: false
+                        }, {
+                            field: "CourseCategory",
+                            title: "@T("Admin.Omni_Backoffice.CourseMaster.Fields.CourseCategory")",
+                            width: 100,
+                            filterable: false,
+                            sortable: false,
+                            editor : CourseCategoryDropDownEditor,
+                            template: '#=getCourseCategoryName(CourseCategory) #'
+                        }, {
+                            field: "Year",
+                            title: "@T("Admin.Omni_Backoffice.CourseMaster.Fields.Year")",
+                            width: 60,
+                            filterable: false,
+                            sortable: false,
+                            editor : YearDropDownEditor,
+                            template: '#=getYearName(Year) #'
+                        }, {
+                            field: "Term",
+                            title: "@T("Admin.Omni_Backoffice.CourseMaster.Fields.Term")",
+                            width: 60,
+                            filterable: false,
+                            sortable: false,
+                            editor : TermDropDownEditor,
+                            template: '#=getTermName(Term) #'
+                        }, {
+                            field: "Grade",
+                            title: "@T("Admin.Omni_Backoffice.CourseMaster.Fields.Grade")",
+                            width: 60,
+                            filterable: false,
+                            sortable: false,
+                            editor : GradeDropDownEditor,
+                            template: '#=getGradeName(Grade) #'
+                        }, {
+                            field: "Level",
+                            title: "@T("Admin.Omni_Backoffice.CourseMaster.Fields.Level")",
+                            width: 60,
+                            filterable: false,
+                            sortable: false,
+                            editor : LevelDropDownEditor,
+                            template: '#=getLevelName(Level) #'
+                        },{
+                            field: "StartWeek",
+                            title: "@T("Admin.Omni_Backoffice.CourseMaster.Fields.StartWeek")",
+                            width: 60,
+                            filterable: false,
+                            sortable: false
+                        },{
+                            field: "TotalWeek",
+                            title: "@T("Admin.Omni_Backoffice.CourseMaster.Fields.TotalWeek")",
+                            width: 60,
+                            filterable: false,
+                            sortable: false
+                        },{
+                            field: "CourseFee",
+                            title: "@T("Admin.Omni_Backoffice.CourseMaster.Fields.CourseFee")",
+                            width: 80,
+                            filterable: false,
+                            sortable: false
+                        },{
+                            field: "BookFee",
+                            title: "@T("Admin.Omni_Backoffice.CourseMaster.Fields.BookFee")",
+                            width: 80,
+                            filterable: false,
+                            sortable: false
+                        },{
+                            field: "Facility",
+                            title: "@T("Admin.Omni_Backoffice.CourseMaster.Fields.Facility")",
+                            width: 80,
+                            filterable: false,
+                            sortable: false
+                        },{
+                            field: "NewBookFee",
+                            title: "@T("Admin.Omni_Backoffice.CourseMaster.Fields.NewBookFee")",
+                            width: 80,
+                            filterable: false,
+                            sortable: false
+                        }, {
+                            field: "Remarks",
+                            title: "@T("Admin.Omni_Backoffice.CourseMaster.Fields.Remarks")",
+                            width: 60,
+                            filterable: false,
+                            sortable: false
+                        },{
+                            field: "YN_Use",
+                            title: "@T("Admin.Omni_Backoffice.CourseMaster.Fields.YN_Use")",
+                            editor: YNDropDownEditor,
+                            //template: "#:Store#",
+                            width: 50,
+                            filterable: false,
+                            sortable: false
+                        },{
+                            field: "reg_date",
+                            title: "@T("Admin.Omni_Backoffice.CourseMaster.Fields.reg_date")",
+                            format: "{0:dd/MM/yyyy}",
+                            //template: "#= kendo.toString(reg_date, 'dd/MM/yyyy') #",
+                            width: 150,
+                            filterable: false,
+                            sortable: false
+                        },
+                            {
+                                command: [{
+                                    name: "edit",
+                                    text: "@T("Admin.Common.Edit")"
+                                }, {
+                                    name: "destroy",
+                                    text: "@T("Admin.Common.Delete")"
+                                }],
+                                width: 200,
+                                filterable: false
+                            }]
+                    });
+                });
+
+                //DropDown YN
+                var itemYN = [
+                    {  Id : "",
+                        Name : ""
+                    },
+                    {  Id : "Y",
+                        Name : "YES"
+                    },
+                    {
+                        Id : "N",
+                        Name : "NO"
+                    }];
+
+
+
+                function YNDropDownEditor(container, options) {
+                    $('<input required data-text-field="Name" data-value-field="Id" data-bind="value:YN_Use"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            autoBind: false,
+                            dataSource: itemYN
+                        });
+                }
+            </script>
+
+            <script type="text/javascript">
+
+    $(document).ready(function () {
+        $('#btnSearch').click(function () {
+            var grid = $('#settings-grid').data('kendoGrid');
+            grid.dataSource.page(1); //new search. Set page size to 1
+            grid.dataSource.read();
+            return false;
+        });
+
+
+
+    });
+
+
+
+
+    var allYearList = [
+
+    @for (int i = 0; i < Model.AvailableYear.Count; i++)
+                {
+                    var term = Model.AvailableYear[i];
+                    <text>
+                    {
+                        Code: "@term.Value",
+                        Name: "@term.Text"
+                    }
+                    </text>
+                    if (i != Model.AvailableYear.Count - 1)
+                    {
+                        <text>,</text>
+                    }
+                }
+    ];
+
+    function YearDropDownEditor(container, options) {
+        $('<input required data-text-field="Name" data-value-field="Code" data-bind="value:'+options.field+'"/>')
+            .appendTo(container)
+            .kendoDropDownList({
+                autoBind: false,
+                dataSource: allYearList
+            });
+    }
+
+    function getYearName(year)
+    {
+        for ( var i = 0; i < allYearList.length; i++)
+        {
+            if ( allYearList[i].Code == year)
+                return allYearList[i].Name;
+        }
+
+        return year;
+    }
+
+    var allTermList = [
+
+    @for (int i = 0; i < Model.AvailableTerm.Count; i++)
+    {
+        var term = Model.AvailableTerm[i];
+        <text>
+        {
+            Code: "@term.Value",
+            Name: "@term.Text"
+        }
+        </text>
+        if (i != Model.AvailableTerm.Count - 1)
+        {
+            <text>,</text>
+        }
+    }
+    ];
+
+    function TermDropDownEditor(container, options) {
+        $('<input required data-text-field="Name" data-value-field="Code" data-bind="value:'+options.field+'"/>')
+            .appendTo(container)
+            .kendoDropDownList({
+                autoBind: false,
+                dataSource: allTermList
+            });
+    }
+
+    function getTermName(term)
+    {
+        for ( var i = 0; i < allTermList.length; i++)
+        {
+            if ( allTermList[i].Code == term)
+                return allTermList[i].Name;
+        }
+
+        return term;
+    }
+
+    var allGradeList = [
+
+@for (int i = 0; i < Model.AvailableGrade.Count; i++)
+            {
+                var grade = Model.AvailableGrade[i];
+                <text>
+                {
+                    Code: "@grade.Value",
+                    Name: "@grade.Text"
+                }
+                </text>
+                if (i != Model.AvailableGrade.Count - 1)
+                {
+                    <text>,</text>
+                }
+            }
+    ];
+
+
+    function GradeDropDownEditor(container, options) {
+        $('<input required data-text-field="Name" data-value-field="Code" data-bind="value:'+options.field+'"/>')
+            .appendTo(container)
+            .kendoDropDownList({
+                autoBind: false,
+                dataSource: allGradeList
+            });
+    }
+    function getGradeName(grade)
+    {
+        for ( var i = 0; i < allGradeList.length; i++)
+        {
+            if ( allGradeList[i].Code == grade)
+                return allGradeList[i].Name;
+        }
+
+        return grade;
+    }
+
+    var allLevelList = [
+
+                    @for (int i = 0; i < Model.AvailableLevel.Count; i++)
+                {
+                    var term = Model.AvailableLevel[i];
+                    <text>
+                    {
+                        Code: "@term.Value",
+                        Name: "@term.Text"
+                    }
+                    </text>
+                    if (i != Model.AvailableLevel.Count - 1)
+                    {
+                        <text>,</text>
+                    }
+                }
+                ];
+
+                function LevelDropDownEditor(container, options) {
+                    $('<input required data-text-field="Name" data-value-field="Code" data-bind="value:'+options.field+'"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            autoBind: false,
+                            dataSource: allLevelList
+                        });
+                }
+
+                function getLevelName(level)
+                {
+                    for ( var i = 0; i < allLevelList.length; i++)
+                    {
+                        if ( allLevelList[i].Code == level)
+                            return allLevelList[i].Name;
+                    }
+
+                    return level;
+                }
+
+                var allCourseCategoryList = [
+
+                                @for (int i = 0; i < Model.AvailableCourseCategory.Count; i++)
+                {
+                    var term = Model.AvailableCourseCategory[i];
+                    <text>
+                    {
+                        Code: "@term.Value",
+                        Name: "@term.Text"
+                    }
+                    </text>
+                    if (i != Model.AvailableCourseCategory.Count - 1)
+                    {
+                        <text>,</text>
+                    }
+                }
+                ];
+
+                function CourseCategoryDropDownEditor(container, options) {
+                    $('<input required data-text-field="Name" data-value-field="Code" data-bind="value:'+options.field+'"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            autoBind: false,
+                            dataSource: allCourseCategoryList
+                        });
+                }
+
+                function getCourseCategoryName(year)
+                {
+                    for ( var i = 0; i < allCourseCategoryList.length; i++)
+                    {
+                        if ( allCourseCategoryList[i].Code == year)
+                            return allCourseCategoryList[i].Name;
+                    }
+
+                    return year;
+                }
+
+
+                
+                var allCourseList = [
+
+            @for (int i = 0; i < Model.AvailableParentCourse.Count; i++)
+                {
+                    var course = Model.AvailableParentCourse[i];
+                    <text>
+                    {
+                        Code: "@course.Value",
+                        Name: "@course.Text"
+                    }
+                    </text>
+                    if (i != Model.AvailableParentCourse.Count - 1)
+                    {
+                        <text>,</text>
+                    }
+                }
+                ];
+
+
+                function CourseDropDownEditor(container, options) {
+                    $('<input required data-text-field="Name" data-value-field="Code" data-bind="value:'+options.field+'"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            autoBind: false,
+                            dataSource: allCourseList
+                        });
+                }
+                function getCourseName(course)
+                {
+                    for ( var i = 0; i < allCourseList.length; i++)
+                    {
+                        if ( allCourseList[i].Code == course)
+                            return allCourseList[i].Name;
+                    }
+
+                    return course;
+                }
+
+
+
+
+
+            </script>
+        </td>
+    </tr>
+</table>

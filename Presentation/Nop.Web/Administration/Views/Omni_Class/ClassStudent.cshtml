@@ -1,0 +1,302 @@
+﻿@model Nop.Admin.Models.Omni_Class.StudentModel
+@{
+    var gridPageSize = EngineContext.Current.Resolve<Nop.Core.Domain.Common.AdminAreaSettings>().GridPageSize;
+
+    //page title
+    ViewBag.Title = T("Admin.Omni_Class.Student").Text;
+}
+@using (Html.BeginForm())
+{
+    <div class="section-header">
+        <div class="title">
+            <img src="@Url.Content("~/Administration/Content/images/ico-sales.png")" alt="" />
+            @T("Admin.Omni_Class.Student")
+        </div>
+        <div class="options">
+            <a href="/Omni_Front/EnrolStudent" class="k-button">@T("MobileEnrolment")</a>
+        </div>
+
+    </div>
+    <table width="100%">
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.Branch):
+            </td>
+            <td class="adminData">
+                @if (Model.is_Admin)
+                {
+                    @Html.DropDownListFor(model => model.Branch, Model.AvailableBranch, new { @class = "adminInput" })
+                }
+                else
+                {
+                    @Html.DropDownListFor(model => model.Branch, Model.AvailableBranch, new { @class = "adminInput", @disabled = "disabled" })
+                }
+            </td>
+        </tr>
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.FirstName):
+            </td>
+            <td class="adminData">
+                @Html.EditorFor(model => model.FirstName, new { @class = "adminInput" })
+            </td>
+        </tr>
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.LastName):
+            </td>
+            <td class="adminData">
+                @Html.EditorFor(model => model.LastName, new { @class = "adminInput" })
+            </td>
+        </tr>
+
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.Grade):
+            </td>
+            <td class="adminData">
+                @Html.DropDownListFor(model => model.Grade, Model.AvailableGrade, new { @class = "adminInput" })
+            </td>
+        </tr>
+
+        <tr>
+            <td colspan="2">
+                <input type="button" id="btnSearch" class="k-button" value="@T("Admin.Common.Search")" />
+            </td>
+        </tr>
+
+    </table>
+    <p>
+    </p>
+    <table class="adminContent">
+        @Html.ValidationSummary()
+        <tr>
+            <td>
+                <div id="grid"></div>
+
+                <script>
+    kendo.culture("en-AU");
+    $(document).ready(function () {
+        $("#grid").kendoGrid({
+            dataSource: {
+                type: "json",
+                transport: {
+                    read: {
+                        url: "@Html.Raw(Url.Action("GetClassStudentList", "Omni_Class"))",
+                        type: "POST",
+                        dataType: "json"
+                    },
+
+                    parameterMap: function (data, operation) {
+                        if (operation != "read") {
+                            return data;
+                        } else {
+                            return {
+                                Branch: $('#@Html.FieldIdFor(model => model.Branch)').val(),
+                                FirstName: $('#@Html.FieldIdFor(model => model.FirstName)').val(),
+                                LastName: $('#@Html.FieldIdFor(model => model.LastName)').val(),
+                                Grade: $('#@Html.FieldIdFor(model => model.Grade)').val()
+                            };
+                        }
+                    }
+                },
+                autoSync: false,
+                schema: {
+                    data: "Data",
+                    total: "Total",
+                    errors: "Errors",
+                    model: {
+                        id: "Id",
+                        fields: {
+                            Branch: { editable: false, type: "string" },
+                            Stud_Id : { editable: false, type: "string"},
+                            FirstName: { editable: false, type: "string" },
+                            LastName: { editable: false, type: "string" },
+                            Grade: { editable: false, type: "string" },
+                            BirthDay: { editable: false, type: "string" },
+                            SchoolName: { editable: false, type: "string" },
+                            ID_Number: { editable: false, type: "string" },
+                            Id: { editable: false, type: "number" }
+                        }
+                    }
+                },
+                requestEnd: function (e) {
+                    if (e.type == "create" || e.type == "update") {
+                        this.read();
+                    }
+                },
+                error: function (e) {
+                    display_kendoui_grid_error(e);
+                    // Cancel the changes
+                    this.cancelChanges();
+                },
+                pageSize: 65536,
+                serverPaging: false,
+                serverFiltering: false,
+                serverSorting: false
+            },
+            resizable: true,
+            scrollable: false,
+            columns: [
+            {
+                field: "Id",
+                title: "ID",
+                hidden: true,
+                filterable: false
+            }, {
+                field: "Branch",
+                title: "@T("Admin.Omni_Backoffice.Teacher.Fields.Branch")",
+                editor: SetBranchDropDownEditor,
+                template: '#=getBranchName(Branch) #',
+                width: 100,
+                filterable: false
+            }, {
+                field: "enrolment",
+                title: "Enrolment",
+                width: 100,
+                template: '<a href="/Admin/Omni_Class/ClassEnrols?Stud_ID=#=Stud_Id#&branch=#=Branch#">Enrolment</a>',
+                filterable: false
+            }, {
+
+                field: "Stud_Id",
+                title: "@T("Admin.Omni_Backoffice.Teacher.Fields.Stud_Id")",
+                width: 170,
+                filterable: false
+            }, {
+                field: "FirstName",
+                title: "@T("Admin.Omni_Backoffice.Teacher.Fields.FirstName")",
+                width: 170,
+                filterable: false
+            }, {
+                field: "LastName",
+                title: "@T("Admin.Omni_Backoffice.Teacher.Fields.LastName")",
+                width: 170,
+                filterable: false
+
+            }, {
+                field: "Grade",
+                title: "@T("Admin.Omni_Backoffice.Teacher.Fields.TeachingGrade")",
+                editor: SetGradeDropDownEditor,
+                template: '#=getGradeName(Grade) #',
+                width: 50,
+                filterable: false
+            }, {
+                field: "BirthDay",
+                title: "@T("Admin.Omni_Backoffice.Teacher.Fields.BirthDay")",
+                width: 300,
+                filterable: false
+            }, {
+                field: "SchoolName",
+                title: "@T("Admin.Omni_Backoffice.Teacher.Fields.SchoolName")",
+                width: 300,
+                filterable: false
+            }, {
+                field: "ID_Number",
+                title: "@T("Admin.Omni_Backoffice.Teacher.Fields.ID_Number")",
+                width: 300,
+                filterable: false
+
+            }]
+        });
+    });
+                </script>
+
+                <script type="text/javascript">
+
+    $(document).ready(function () {
+
+        $('#btnSearch').click(function () {
+            var grid = $('#grid').data('kendoGrid');
+            grid.dataSource.page(1); //new search. Set page size to 1
+            grid.dataSource.read();
+
+        });
+
+
+
+    });
+
+
+
+
+
+
+    var allBranchList = [
+
+    @for (int i = 0; i < Model.AvailableBranch.Count; i++)
+                    {
+                        var branch = Model.AvailableBranch[i];
+                        <text> { Code: "@branch.Value", Name: "@branch.Text" }  </text>
+                        if (i != Model.AvailableBranch.Count - 1)
+                        {
+                            <text>,</text>
+                        }
+                    }
+    ];
+
+    function SetBranchDropDownEditor(container, options) {
+        $('<input required data-text-field="Name" data-value-field="Code" data-bind="value:'+options.field+'"/>')
+            .appendTo(container)
+            .kendoDropDownList({
+                autoBind: false,
+                dataSource: allBranchList
+            });
+    }
+    function getBranchName(branch)
+    {
+        for ( var i = 0; i < allBranchList.length; i++)
+        {
+            if ( allBranchList[i].Code == branch)
+                return allBranchList[i].Name;
+        }
+
+        return branch;
+    }
+
+
+
+
+                    var allGradeList = [
+
+        @for (int i = 0; i < Model.AvailableGrade.Count; i++)
+                    {
+                        var grade = Model.AvailableGrade[i];
+                        <text> {Code: "@grade.Value", Name: "@grade.Text" } </text>
+                        if (i != Model.AvailableGrade.Count - 1)
+                        {
+                            <text>,</text>
+                        }
+                    }
+                    ];
+
+                    function SetGradeDropDownEditor(container, options) {
+                        $('<input required data-text-field="Name" data-value-field="Code" data-bind="value:'+options.field+'"/>')
+                            .appendTo(container)
+                            .kendoDropDownList({
+                                autoBind: false,
+                                dataSource: allGradeList
+                            });
+                    }
+
+                    function getGradeName(grade) {
+                        for (var i = 0; i < allGradeList.length; i++) {
+                            if (allGradeList[i].Code == grade)
+                                return allGradeList[i].Name;
+                        }
+
+                        return grade;
+                    }
+
+
+
+
+
+
+
+
+
+                </script>
+            </td>
+        </tr>
+    </table>
+}

@@ -1,0 +1,321 @@
+﻿@model Nop.Admin.Models.Omni_Class.ClassStudentModel
+@{
+    var gridPageSize = EngineContext.Current.Resolve<Nop.Core.Domain.Common.AdminAreaSettings>().GridPageSize;
+
+    //page title
+    ViewBag.Title = T("Admin.Omni_Class.TodayStudentList").Text;
+}
+@using (Html.BeginForm())
+{
+    <div class="section-header">
+        <div class="title">
+            <img src="@Url.Content("~/Administration/Content/images/ico-sales.png")" alt="" />
+            @T("Admin.Omni_Class.TodayStudentList")
+        </div>
+
+    </div>
+    <table width="100%">
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.Branch):
+            </td>
+            <td class="adminData">
+                @if (Model.is_Admin)
+                {
+                    @Html.DropDownListFor(model => model.Branch, Model.AvailableBranch, new { @class = "adminInput" })
+                }
+                else
+                {
+                    @Html.DropDownListFor(model => model.Branch, Model.AvailableBranch, new { @class = "adminInput", @disabled = "disabled" })
+                }
+            </td>
+        </tr>
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.Class_Date):
+            </td>
+            <td class="adminData">
+                <input id="Class_Date" />
+
+                @Html.DropDownListFor(model => model.TimeType, Model.AvailableTimeType, new { @class = "adminInput" })
+
+            </td>
+        </tr>
+        <script>
+            $("#Class_Date").kendoDatePicker({
+                value: new Date(),
+                culture: "en-AU",
+                format: "dd/MM/yyyy"
+            });
+
+        </script>
+
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.Grade):
+            </td>
+            <td class="adminData">
+                @Html.DropDownListFor(model => model.Grade, Model.AvailableGrade, new { @class = "adminInput" })
+            </td>
+        </tr>
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.Status):
+            </td>
+            <td class="adminData">
+                @Html.DropDownListFor(model => model.Status, Model.AvailableStatus, new { @class = "adminInput" })
+            </td>
+        </tr>
+
+
+        <tr>
+            <td colspan="2">
+                <input type="button" id="btnSearch" class="k-button" value="@T("Admin.Common.Search")" />
+            </td>
+        </tr>
+
+    </table>
+    <p>
+    </p>
+    <table class="adminContent">
+        @Html.ValidationSummary()
+        <tr>
+            <td>
+                <div id="grid"></div>
+
+                <script>
+    kendo.culture("en-AU");
+    $(document).ready(function () {
+        $("#grid").kendoGrid({
+            dataSource: {
+                type: "json",
+                transport: {
+                    read: {
+                        url: "@Html.Raw(Url.Action("GetTodayStudentList", "Omni_Class"))",
+                        type: "POST",
+                        dataType: "json"
+                    },
+                    update: {
+                        url:"@Html.Raw(Url.Action("UpdateTodayStudent", "Omni_Class"))",
+                        type: "POST",
+                        dataType: "json"
+                    },
+                    parameterMap: function (data, operation) {
+                        if (operation != "read") {
+                            return data;
+                        } else {
+
+                            var d = $('#@Html.FieldIdFor(model => model.Class_Date)').val();
+                            var d2 = d.substr(6, 4) + "-" + d.substr(3, 2) + "-" + d.substr(0, 2);
+                            return {
+                                Class_Date: d2,
+                                Branch: $('#@Html.FieldIdFor(model => model.Branch)').val(),
+                                Grade: $('#@Html.FieldIdFor(model => model.Grade)').val(),
+                                TimeType: $('#@Html.FieldIdFor(model => model.TimeType)').val(),
+                                Status: $('#@Html.FieldIdFor(model => model.Status)').val()
+                            };
+                        }
+                    }
+                },
+                aggregate: [{
+                    field: "Status",
+                    aggregate: "count"
+                }],
+                autoSync: true,
+                schema: {
+                    data: "Data",
+                    total: "Total",
+                    errors: "Errors",
+                    model: {
+                        id: "Id",
+                        fields: {
+                            Stud_Id: { editable: false, type: "string" },
+                            FirstName: { editable: false, type: "string" },
+                            LastName: { editable: false, type: "string" },
+                            Grade: { editable: false, type: "string" },
+                            Status: { editable: false, type: "string" },
+                            Remarks: { editable: true, type: "string" },
+                            Class_Name: { editable: false, type: "string" },
+                            Class_Id: { editable: false, type: "number" },
+                            Class_Id_Mod: { editable: true, type: "string" },
+                            HomePhone: { editable: false, type: "string" },
+                            Mobile1: { editable: false, type: "string" },
+                            Mobile2: { editable: false, type: "string" },
+                            Id: { editable: false, type: "number" }
+                        }
+                    }
+                },
+                requestEnd: function (e) {
+                    if (e.type == "create" || e.type == "update") {
+                        this.read();
+                    }
+                    else
+                    {
+                        var d = $('#@Html.FieldIdFor(model => model.Class_Date)').val();
+                        var d2 = d.substr(6, 4) + "-" + d.substr(3, 2) + "-" + d.substr(0, 2);
+                    }
+                },
+                error: function (e) {
+                    display_kendoui_grid_error(e);
+                    // Cancel the changes
+                    this.cancelChanges();
+                },
+                pageSize: 65536,
+                serverPaging: false,
+                serverFiltering: false,
+                serverSorting: false
+            },
+            resizable: true,
+            scrollable: false,
+            editable: {
+                confirmation: false,
+                mode: "incell"
+            },
+            selectable: "row",
+            columns: [
+            {
+                field: "Id",
+                title: "ID",
+                hidden: true,
+                filterable: false
+            },{
+                field: "Class_Id",
+                title: "@T("Admin.Omni_Backoffice.ClassEnrol.Fields.Class_Id")",
+                hidden: true
+            },{
+                field: "Class_Id_Mod",
+                title: "@T("Admin.Omni_Backoffice.ClassEnrol.Fields.Class_Id")",
+                editor: ClassDropDownEditor,
+                template: '#=getClassName(Class_Id_Mod) #',
+                width: 300
+            }, {
+                field: "Status",
+                title: "@T("Admin.Omni_Backoffice.ClassScheduleRollcall.Fields.Attend")",
+                template: '<img src="@Url.Content("~/Administration/Content/images/")active-#=Status#.gif" />',
+                aggregates: ["count"],
+                footerTemplate: "<div style='float:right'>Total : #=count#</div>",
+                width: 170,
+                filterable: false
+            }, {
+                field: "Remarks",
+                title: "@T("Admin.Omni_Backoffice.ClassScheduleRollcall.Fields.Remarks")",
+                width: 170,
+                filterable: false
+            }, {
+                field: "Stud_Id",
+                title: "@T("Admin.Omni_Backoffice.Student.Fields.Stud_Id")",
+                width: 170,
+                filterable: false
+            }, {
+                field: "FirstName",
+                title: "@T("Admin.Omni_Backoffice.Student.Fields.FirstName")",
+                width: 170,
+                filterable: false
+            }, {
+                field: "LastName",
+                title: "@T("Admin.Omni_Backoffice.Student.Fields.LastName")",
+                width: 300,
+                filterable: false
+            }, {
+                field: "HomePhone",
+                title: "@T("Admin.Omni_Backoffice.Student.Fields.HomePhone")",
+                width: 300,
+                filterable: false
+            }, {
+                field: "Mobile1",
+                title: "@T("Admin.Omni_Backoffice.Student.Fields.Mobile1")",
+                width: 300,
+                filterable: false
+            }, {
+                field: "Mobile2",
+                title: "@T("Admin.Omni_Backoffice.Student.Fields.Mobile2")",
+                width: 300,
+                filterable: false
+            }]
+        });
+    });
+</script>
+
+                <script type="text/javascript">
+                    kendo.culture("en-AU");
+    $(document).ready(function () {
+
+        $('#btnSearch').click(function () {
+            var grid = $('#grid').data('kendoGrid');
+            grid.dataSource.page(1); //new search. Set page size to 1
+            grid.dataSource.read();
+
+        });
+
+
+
+
+    });
+
+
+
+    var allClassList = [
+
+@for (int i = 0; i < Model.AvailableClass.Count; i++)
+    {
+        var item = Model.AvailableClass[i];
+        <text> { Code: "@item.Value", Name: "@item.Text" } </text>
+        if (i != Model.AvailableClass.Count - 1)
+        { <text>,</text> }
+        }
+    ];
+
+
+                    function curClassList()
+                    {
+                        var entityGrid = $("#grid").data("kendoGrid");
+                        var selectedItem = entityGrid.dataItem(entityGrid.select());
+                        var rownum = selectedItem.rownum;
+
+                        var curval = selectedItem.Class_Id_Mod;
+
+                        var newclasslist = "[ ";
+
+                        for (var i = 0 ; i < allClassList.length; i++)
+                        {
+                            var item = allClassList[i];
+
+                            if ( item.Code.substr(0,4) == curval.substr(0,4))
+                            {
+                                newclasslist += (i > 0 ? "," : "") + " { Code:" + item.Code + ", Name:" + item.Name + " } \r\n"
+                            }
+                        }
+
+                        newclasslist += " ]";
+
+                        return newclasslist;
+                    }
+
+                    function ClassDropDownEditor(container, options) {
+
+                        var curlist = curClassList();
+        $('<input required data-text-field="Name" data-value-field="Code" data-bind="value:'+options.field+'"/>')
+            .appendTo(container)
+            .kendoDropDownList({
+                autoBind: false,
+                dataSource: allClassList
+            });
+    }
+
+    function getClassName(class_id)
+    {
+        for ( var i = 0; i < allClassList.length; i++)
+        {
+            if ( allClassList[i].Code == class_id)
+                return allClassList[i].Name;
+        }
+
+        return class_id;
+    }
+
+
+                </script>
+            </td>
+        </tr>
+    </table>
+}

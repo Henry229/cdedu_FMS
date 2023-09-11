@@ -1,0 +1,75 @@
+﻿@model LoginModel
+@using Nop.Web.Models.Customer;
+@using Nop.Core;
+@using Nop.Core.Infrastructure;
+@{
+    Layout = "~/Views/Shared/_LoginAdmin.cshtml";
+
+    //title
+    Html.AddTitleParts(T("PageTitle.Login").Text);
+
+}
+<div class="page login-page">
+    <div class="page-title">
+        <h1>@T("Account.Login.Welcome")</h1>
+    </div>
+    @Html.Partial("_ExternalAuthentication.AssociateMessage")
+    @Html.Partial("_ExternalAuthentication.Errors")
+    <div class="page-body">
+        <div class="customer-blocks">
+
+            <div   >
+                <div class="title">
+                    <strong>Branch Manager</strong>
+                </div>
+                <div class="form-fields">
+                    @using (Html.BeginForm())
+                    {
+                        <div class="message-error">
+                            @Html.ValidationSummary(true, T("Account.Login.Unsuccessful").Text)
+                        </div>
+                        if (Model.UsernamesEnabled)
+                        {
+                            <div class="inputs">
+                                @Html.LabelFor(m => m.Username, new { }, ":")
+                                @Html.TextBoxFor(m => m.Username, new { @class = "username", autofocus = "autofocus" })
+                                @Html.ValidationMessageFor(m => m.Username)
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="inputs">
+                                @Html.LabelFor(m => m.Email, new { }, ":")
+                                @Html.TextBoxFor(m => m.Email, new { @class = "email", autofocus = "autofocus" })
+                                @Html.ValidationMessageFor(m => m.Email)
+                            </div>
+                        }
+                        <div class="inputs">
+                            @Html.LabelFor(m => m.Password, new { }, ":")
+                            @Html.PasswordFor(m => m.Password, new { @class = "password" })
+                            @Html.ValidationMessageFor(m => m.Password)
+                        </div>
+                        <div class="inputs reversed">
+                            @Html.CheckBoxFor(m => m.RememberMe)
+                            @Html.LabelFor(m => m.RememberMe)
+
+                        </div>
+                        if (Model.DisplayCaptcha)
+                        {
+                            <div class="captcha-box">
+                                @Html.Raw(Html.GenerateCaptcha())
+                            </div>
+                        }
+                        <div class="buttons">
+                            <input class="button-1 login-button" type="submit" value="@T("Account.Login.LoginButton")" />
+                        </div>
+
+                    }
+                </div>
+            </div>
+        </div>
+        <div class="external-authentication">
+            @Html.Action("ExternalMethods", "ExternalAuthentication")
+        </div>
+    </div>
+</div>

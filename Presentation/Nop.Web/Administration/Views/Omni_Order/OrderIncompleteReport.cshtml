@@ -1,0 +1,118 @@
+﻿<table class="adminContent">
+    <tr>
+        <td>
+
+            <div id="incomplete-order-report-grid"></div>
+            <script>
+                $(document).ready(function () {
+                    $("#incomplete-order-report-grid").kendoGrid({
+                        dataSource: {
+                            type: "json",
+                            transport: {
+                                read: {
+                                    url: "@Html.Raw(Url.Action("OrderIncompleteReportList", "Omni_Order"))",
+                                    type: "POST",
+                                    dataType: "json"
+                                }
+                            },
+                            schema: {
+                                data: "Data",
+                                total: "Total",
+                                errors: "Errors"
+                            },
+                            error: function(e) {
+                                display_kendoui_grid_error(e);
+                                // Cancel the changes
+                                this.cancelChanges();
+                            },
+                            serverPaging: true,
+                            serverFiltering: true,
+                            serverSorting: true
+                        },
+                        pageable: {
+                            refresh: true,
+                            numeric: false,
+                            previousNext: false,
+                            info: false
+                        },
+                        editable: {
+                            confirmation: false,
+                            mode: "inline"
+                        },
+                        scrollable: false,
+                        columns: [{
+                            field: "Id",
+                            title: "@T("Id")"
+                        }, {
+                            field: "Branch",
+                            title: "@T("Branch")"
+
+                        }, {
+                            field: "OrderType",
+                            title: "@T("OrderType")"
+                         }, {
+                            /*Edited by Karen See 22/02/2021*/
+                            //field: "OrderDate",
+                            //title: "("Order Date")",
+                            //type: "date",
+                            //template: "#= kendo.toString(OrderDate, 'dd/MM/yyyy') #" 
+                            //}, {
+                                field: "confirm_date",
+                            title: "@T("Confirm Date")",
+                            type: "date",
+                                template: "#= kendo.toString(confirm_date, 'dd/MM/yyyy') #"
+                        }, {
+                            field: "EstimateDate",
+                            title: "@T("Estimate Date")",
+                            type: "date",
+                            template: "#= kendo.toString(EstimateDate, 'dd/MM/yyyy') #"
+                        }, {
+                            field: "Week",
+                            title: "Week",
+                            type: "int"
+                        }, {
+                            field: "Status",
+                            title: "@T("Order Status")"
+                        }, {
+                            field: "edit",
+                            title: "Detail",
+                            width: 80,
+                            template: '<a href="Omni_Order/EditOrder/#=Id#">Detail</a>',
+                            editor: "<label></label>",
+                            editable: false,
+                            filterable: false
+                        }, {
+                            field: "PDF",
+                            title: "PDF",
+                            width: 80,
+                            template: '<a href="Omni_Order/PdfInvoice?orderId=#=Id#">PDF</a>',
+                            editor: "<label></label>",
+                            editable: false,
+                            filterable: false
+                        }, {
+                            field: "Printing",
+                            title: "Printing",
+                            width: 80,
+                            template: '<a href="Omni_Order/ProduceOrder?selectedIds=#=Id#&returnurl=Admin">Printing</a>',
+                            editor: "<label></label>",
+                            editable: false,
+                            filterable: false
+                        }, {
+                            field: "Delivery",
+                            title: "Delivery",
+                            width: 80,
+                            template: '<a  href="Omni_Order/DeliverOrder?selectedIds=#=Id#&returnurl=Admin">Delivery</a>',
+                            editor: "<label></label>",
+                            editable: false,
+                            filterable: false
+                        }]
+                    });
+                });
+
+
+
+
+            </script>
+        </td>
+    </tr>
+</table>

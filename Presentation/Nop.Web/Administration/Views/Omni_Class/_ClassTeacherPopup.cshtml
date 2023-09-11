@@ -1,0 +1,159 @@
+﻿@model Nop.Admin.Models.Omni_Class.ClassTeacherPopupModel
+<div id="window_classteacherpopup">
+    <table width="100%">
+        <tr>
+            <td class="adminTitle">
+                @*@Html.NopLabelFor(model => model.AvailableBranch):*@
+            </td>
+            <td class="adminData">
+                @*@Html.DropDownListFor(model => model.Branch, Model.AvailableBranch, new { @class = "adminInput" })*@
+                
+                <input type="text" id="Teacher_Id" readonly, style="display:none" />
+                <input type="text" id="FirstName" readonly, style="display:none" />
+                <input type="text" id="LastName" readonly, style="display:none" />
+                <input type="text" id="Subject" readonly, style="display:none" />
+              
+            </td>
+        </tr>
+
+        <tr>
+            <td colspan="2">
+                <input type="button" id="btnSearchClassTeacherPopup" class="k-button" value="@T("Admin.Common.Search")" />
+            </td>
+        </tr>
+    </table>
+    <p>
+    </p>
+
+    <table>
+        <tr>
+            <td>
+                <div id="classteacherpopup-grid"></div>
+
+                <script>
+    kendo.culture("en-AU");
+    var param_prefix = "";
+    $(document).ready(function () {
+        $("#classteacherpopup-grid").kendoGrid({
+            dataSource: {
+                type: "json",
+                transport: {
+                    read: {
+                        url: "@Html.Raw(Url.Action("GetClassTeacherPopupList", "Omni_Class"))",
+                                    type: "POST",
+                                    dataType: "json"
+                                },
+                                parameterMap: function (data, operation) {
+                                    if (operation != "read") {
+                                        var d = new Date(data.reg_date);
+                                        data.reg_date = kendo.toString(new Date(d), "yyyy-MM-dd");
+                                        return data;
+                                    } else {
+
+                                        return {
+                                            Teacher_Id: $('#@Html.FieldIdFor(model => model.Teacherpop_Id)').val(),
+                                            FirstName: $('#@Html.FieldIdFor(model => model.FirstName)').val(),
+                                            LastName: $('#@Html.FieldIdFor(model => model.LastName)').val(),
+                                            Subject: $('#@Html.FieldIdFor(model => model.Subject)').val()
+                            }
+
+                        }
+                    }
+                },
+                autoSync: false,
+                schema: {
+                    data: "Data",
+                    total: "Total",
+                    errors: "Errors",
+                    model: {
+                        fields: {
+                            FirstName: { editable: true, type: "string" },
+                            LastName: { editable: true, type: "string" },
+                            Subject: { editable: true, type: "string" },
+                            Teacherpop_Id: { editable: true, type: "string" }
+                        }
+                    }
+                },
+                requestEnd: function (e) {
+                    if (e.type == "create" || e.type == "update") {
+                        this.read();
+                    }
+                },
+                error: function (e) {
+                    display_kendoui_grid_error(e);
+                    // Cancel the changes
+                    this.cancelChanges();
+                },
+                pageSize: 100000,
+                serverPaging: true,
+                serverFiltering: true,
+                serverSorting: true
+            },
+            pageable: {
+                refresh: true
+            },
+            sortable: false,
+            scrollable: false,
+            columns: [{
+
+                field: "select",
+                title: "Click",
+                width: 100, 
+                template: '<a onclick=click_select_teacher("#=Teacherpop_Id#","#=FirstName#","#=LastName#","#=Subject#") href="javascript:void(0);"> Select </a>',
+                editor: "<label></label>",
+                editable: false,
+                filterable: false
+            }, {
+                field: "FirstName",
+                title: "@T("Admin.Omni_Backoffice.Teacher.Fields.FirstName")",
+                width: 40,
+                filterable: false,
+                sortable: false
+            }, {
+                field: "LastName",
+                title: "@T("Admin.Omni_Backoffice.Teacher.Fields.LastName")",
+                width: 40,
+                filterable: false,
+                sortable: false
+            }, {
+                field: "Subject",
+                title: "@T("Admin.Omni_Backoffice.Teacher.Fields.Subject")",
+                width: 80,
+                filterable: false,
+                sortable: false
+            }]
+        });
+    });
+
+                </script>
+
+                <script type="text/javascript">
+
+                    $("#btnSearchClassTeacherPopup").click(function () {
+                        var popupgrid = $("#classteacherpopup-grid").data("kendoGrid");
+                        popupgrid.dataSource.page(1); //new search. Set page size to 1
+                        popupgrid.dataSource.read();
+
+                        return false;
+                    });
+
+
+                    function click_select_teacher(teacherpop_id, firstname, lastname, subject) {
+                        document.getElementById('Teacher_Id').value = teacherpop_id;
+                        document.getElementById('FirstName').value = firstname;
+                        document.getElementById('LastName').value = lastname;
+                        document.getElementById('Subject').value = subject;
+                        $("#window_classteacherpopup").data("kendoWindow").close();
+                    }
+
+
+                </script>
+
+
+
+
+
+            </td>
+        </tr>
+    </table>
+</div>

@@ -1,0 +1,86 @@
+﻿@using Nop.Services.Security
+@model DashboardModel
+@{
+    //page title
+    ViewBag.Title = T("Admin.Dashboard").Text;
+
+    var permissionService = EngineContext.Current.Resolve<IPermissionService>();
+    var canManageOrders = permissionService.Authorize(StandardPermissionProvider.ManageOrders);
+    var canManageCustomers = permissionService.Authorize(StandardPermissionProvider.ManageCustomers);
+    var canManageProducts = permissionService.Authorize(StandardPermissionProvider.ManageProducts);
+}
+<div class="section-title">
+    <img src="@Url.Content("~/Administration/Content/images/ico-dashboard.png")" alt="" />
+    @T("Admin.Dashboard")
+</div>
+<table class="dashboard">
+    @Html.Widget("admin_dashboard_top")
+    <tr>
+        <td class="maincol">
+            <div class="section-header">
+                <div class="title">
+                    <img src="@Url.Content("~/Administration/Content/images/ico-stat1.gif")" alt="" />
+                    @T("Admin.Dashboard.StoreStatistics")
+                </div>
+            </div>
+
+            @if (Model.Is_Branch && !Model.Is_Production && !Model.Is_Admin )  // 브렌치이면
+            {
+                <table class="stats">
+                    <tbody>
+                        <tr>
+                            <td class="orderaveragereport">
+                                <div class="statisticsTitle">
+                                    @T("Admin.Order.MyOrder")
+                                </div>
+                                @Html.Action("MyorderReport", "Omni_Order")
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            }
+            @if (Model.Is_Production)   // 프로덕션이면   미완료 오더 / 마이너스재고
+            {
+                    <table class="stats">
+                        <colgroup>
+                            <col width="65%">
+                            <col width="35%">
+                        </colgroup>
+                        <tbody>
+                            <tr>
+                                <td class="orderstatistics">
+                                    <div class="statisticsTitle">  
+                                        @T("Admin.Order.Incomplete")  
+                                    </div>
+                                    @Html.Action("OrderIncompleteReport", "Omni_Order")
+                                </td>
+                                <td class="customerstatistics">
+                                    <div class="statisticsTitle">
+                                        @T("Admin.Order.BalanceItem")
+                                    </div>
+                                    @Html.Action("ShortageItemsReport", "Omni_Order")
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td class="orderstatistics">
+                                    <div class="statisticsTitle">
+                                        @T("Admin.Printing.Incomplete")
+                                    </div>
+                                    @Html.Action("IncompletePrintingList", "Omni_Printing")
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+            }
+            @if (Model.Is_Accountant) // 어카운턴트 이면
+            {
+
+            }
+        </td>
+            <td class="rightcol">
+                @Html.Action("NopCommerceNews", "Home")
+            </td>
+    </tr>
+    @Html.Widget("admin_dashboard_bottom")
+</table>

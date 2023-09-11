@@ -1,0 +1,25 @@
+﻿@model Nop.Admin.Models.Omni_Class.ClassInfoModel
+@{
+    //page title
+    ViewBag.Title = T("Admin.Omni_Class.Classes.EditClassDetails").Text;
+}
+@using (Html.BeginForm())
+{
+    <div class="section-header">
+        <div class="title">
+            <img src="@Url.Content("~/Administration/Content/images/ico-sales.png")" alt="" />
+            @T("Admin.Omni_Class.Classes.EditClassDetails") @Html.ActionLink("(" + T("Admin.Omni_Class.Classes.BackToList") + ")", "ClassList")
+        </div>
+        <div class="options">
+            <input type="submit" name="save" class="k-button" value="@T("Admin.Common.Save")" />
+            <input type="submit" name="save-continue" class="k-button" value="@T("Admin.Common.SaveContinue")" />
+            <span id="class-delete" class="k-button">@T("Admin.Common.Delete")</span>
+            <div class="options"><input type="button" id="pdf-enrolment" class="k-button" value="@T("Admin.Omni_Order.PrintEnrolment")" /></div>
+            <div class="options"><input type="button" id="pdf-namelist" class="k-button" value="@T("Admin.Omni_Order.NameList")" /></div>
+            <div class="options"><input type="button" id="pdf-rollcall" class="k-button" value="@T("Admin.Omni_Order.PrintRollcall")" /></div>
+            <div class="options"><input type="button" id="pdf-classtest" class="k-button" value="@T("Admin.Omni_Order.PrintClassTest")" /></div>
+        </div>
+    </div>
+    @Html.Partial("_CreateOrUpdateClass", Model)
+}
+@Html.DeleteConfirmation("class-delete")

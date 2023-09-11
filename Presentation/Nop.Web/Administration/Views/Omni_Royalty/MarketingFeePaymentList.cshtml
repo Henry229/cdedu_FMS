@@ -1,0 +1,200 @@
+﻿@model Nop.Admin.Models.Omni_Royalty.MarketingFeePaymentModel
+@{
+    var gridPageSize = EngineContext.Current.Resolve<Nop.Core.Domain.Common.AdminAreaSettings>().GridPageSize;
+
+    //page title
+    ViewBag.Title = T("Admin.Omni_Royalty.MarketingFeePaymentList").Text;
+}
+@using (Html.BeginForm())
+{
+    <div class="section-header">
+        <div class="title">
+            <img src="@Url.Content("~/Administration/Content/images/ico-sales.png")" alt="" />
+            @T("Admin.Omni_Royalty.MarketingFeePaymentList") <a href="javascript:history.go(-1)">(Back to order list)</a>
+
+        </div>
+
+    </div>
+    <table width="100%">
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.Fee_id):
+            </td>
+            <td class="adminData">
+                @Html.TextBoxFor(model => model.Fee_id, new { @readonly = "readonly" })
+                
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2">
+                <input type="button" id="btnSearch" class="k-button" value="@T("Admin.Common.Search")" />
+            </td>
+        </tr>
+
+
+    </table>
+    <p>
+    </p>
+    <table class="adminContent">
+        @Html.ValidationSummary()
+        <tr>
+            <td>
+                <div id="grid"></div>
+
+                <script>
+    kendo.culture("en-AU");
+    $(document).ready(function () {
+        $("#grid").kendoGrid({
+            dataSource: {
+                type: "json",
+                transport: {
+                    read: {
+                        url: "@Html.Raw(Url.Action("GetMarketingFeePaymentList", "Omni_Royalty"))",
+                        type: "POST",
+                        dataType: "json"
+                    },
+                    create: {
+                        url: "@Html.Raw(Url.Action("MarketingFeePaymentInsert", "Omni_Royalty"))",
+                        type: "POST",
+                        dataType: "json"
+                    },
+                    update: {
+                        url: "@Html.Raw(Url.Action("MarketingFeePaymentUpdate", "Omni_Royalty"))",
+                        type: "POST",
+                        dataType: "json"
+                    },
+                    destroy: {
+                        url: "@Html.Raw(Url.Action("MarketingFeePaymentDelete", "Omni_Royalty"))",
+                                        type: "POST",
+                                        dataType: "json"
+                                    },
+                                    parameterMap: function (data, operation) {
+                                        if (operation != "read") {
+                                            var d = new Date(data.PayDate);
+                                            data.PayDate = kendo.toString(new Date(d), "yyyy-MM-dd");
+
+                                            if (operation == "create") {
+                                                data.Fee_id = $('#@Html.FieldIdFor(model => model.Fee_id)').val();
+                                            }
+
+                                            return data;
+                                        } else {
+                                            return {
+                                                Fee_id: $('#@Html.FieldIdFor(model => model.Fee_id)').val()
+                                            };
+                                        }
+                                    }
+                },
+                autoSync: false,
+                schema: {
+                    data: "Data",
+                    total: "Total",
+                    errors: "Errors",
+                    model: {
+                        id: "Id",
+                        fields: {
+
+                            Fee_id: { editable: false, type: "number", default: $('#@Html.FieldIdFor(model => model.Fee_id)').val() },
+                            PayDate: { editable: true, type: "date" },
+                            Amount: { editable: true, type: "number" },
+                            Remarks: { editable: true, type: "string" }
+                        }
+                    }
+                },
+                requestEnd: function (e) {
+                    if (e.type == "create" || e.type == "update") {
+                        this.read();
+                    }
+                },
+                error: function (e) {
+                    display_kendoui_grid_error(e);
+                    // Cancel the changes
+                    this.cancelChanges();
+                },
+                pageSize: 10000,
+                serverPaging: false,
+                serverFiltering: false,
+                serverSorting: false
+            },
+            resizable: true,
+
+            toolbar: ["create"],
+            editable: {
+                confirmation: false,
+                mode: "inline"
+            },
+            scrollable: false,
+            selectable: "row",
+            columns: [
+            {
+                field: "Id",
+                title: "@T("#")",
+                width: 50,
+                filterable: false,
+                hidden: true
+            }, {
+                field: "Fee_id",
+                title: "@T("#")",
+                width: 50,
+                filterable: false,
+                hidden: true
+            }, {
+                field: "PayDate",
+                title: "@T("Admin.Omni_Backoffice.MarketingFeePayment.Fields.PayDate")",
+                type: "date",
+                template: "#= kendo.toString(PayDate, 'dd/MM/yyyy') #",
+                width: 200,
+                filterable: false
+            
+            }, {
+                field: "Amount",
+                title: "@T("Admin.Omni_Backoffice.MarketingFeePayment.Fields.Amount")",
+                width: 100,
+                format: '{0:n2}'
+            }, {
+                field: "Remarks",
+                title: "@T("Admin.Omni_Backoffice.MarketingFeePayment.Fields.Remarks")",
+                width: 200,
+                filterable: false
+            }, {
+
+                command: [{
+                    name: "edit",
+                    text: "@T("Admin.Common.Edit")",
+                }, {
+                    name: "destroy",
+                    text: "@T("Admin.Common.Delete")"
+                    }],
+                width: 200,
+                filterable: false
+           
+            }]
+        });
+    });
+
+
+                </script>
+
+                <script type="text/javascript">
+
+                    var selectedIds = [];
+                    $(document).ready(function () {
+
+                        $('#btnSearch').click(function () {
+                            var grid = $('#grid').data('kendoGrid');
+                            grid.dataSource.page(1); //new search. Set page size to 1
+                            grid.dataSource.read();
+
+                            return false;
+                        });
+
+
+                    });
+
+
+
+                </script>
+            </td>
+        </tr>
+    </table>
+}

@@ -1,0 +1,145 @@
+﻿@using Nop.Services.Omni_Backoffice
+@{
+    var gridPageSize = EngineContext.Current.Resolve<Nop.Core.Domain.Common.AdminAreaSettings>().GridPageSize;
+
+    //page title
+    ViewBag.Title = T("Admin.Omni_Item.ItemCategory").Text;
+}
+<div class="section-header">
+    <div class="title">
+        <img src="@Url.Content("~/Administration/Content/images/ico-configuration.png")" alt="" />
+        @T("Admin.Omni_Basis.ItemCategory")
+    </div>
+</div>
+<table class="adminContent">
+    <tr>
+        <td>
+            @T("Admin.Omni_Item.ItemCategory.Description")
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <div id="settings-grid"></div>
+
+            <script>
+                $(document).ready(function () {
+                    $("#settings-grid").kendoGrid({
+                        dataSource: {
+                            type: "json",
+                            transport: {
+                                read: {
+                                    url: "@Html.Raw(Url.Action("ItemCategory", "Omni_Item"))",
+                                    type: "POST",
+                                    dataType: "json",
+                                    contentType: "application/json"
+                                },
+                                create: {
+                                    url: "@Html.Raw(Url.Action("ItemCategoryInsert", "Omni_Item"))",
+                                    type: "POST",
+                                    dataType: "json"
+                                },
+                                update: {
+                                    url:"@Html.Raw(Url.Action("ItemCategoryUpdate", "Omni_Item"))",
+                                    type: "POST",
+                                    dataType: "json"
+                                },
+                                destroy: {
+                                    url: "@Html.Raw(Url.Action("ItemCategoryDelete", "Omni_Item"))",
+                                    type: "POST",
+                                    dataType: "json"
+                                },
+                                parameterMap: function(data, operation) {
+                                    if (operation != "read") {
+                                        return data;
+                                    } else {
+                                        //for some reasons only such "Filter" data be parsed
+                                        return JSON.stringify(data);
+                                    }
+                                }
+                            },
+                            schema: {
+                                data: "Data",
+                                total: "Total",
+                                errors: "Errors",
+                                model: {
+                                    id: "Id",
+                                    fields: {
+                                        CategoryCode: { editable: true, type: "string" },
+                                        CategoryName: { editable: true, type: "string" },
+                                        Remarks: { editable: true, type: "string" },
+                                      
+                                    }
+                                }
+                            },
+                            requestEnd: function (e) {
+                                if (e.type == "create" || e.type == "update") {
+                                    this.read();
+                                }
+                            },
+                            error: function (e) {
+                                display_kendoui_grid_error(e);
+                                // Cancel the changes
+                                this.cancelChanges();
+                            },
+                            pageSize: @(gridPageSize),
+                            serverPaging: true,
+                            serverFiltering: true,
+                            serverSorting: true
+                        },
+                        pageable: {
+                            refresh: true
+                        },
+                        sortable: true,
+                        toolbar: ["create"],
+                        editable: {
+                            confirmation: false,
+                            mode: "inline"
+                        },
+                        filterable: {
+                            extra: false,
+                            operators: {
+                                string: {
+                                    contains: "Contains",
+                                    eq: "Is equal to"
+                                }
+                            }
+                        },
+                        scrollable: false,
+                        columns: [{
+                            field: "CategoryCode",
+                            title: "@T("Admin.Omni_Backoffice.ItemCategory.Fields.CategoryCode")",
+                            width: 80,
+                            filterable: true,
+                            sortable: true
+                        }, {
+                            field: "CategoryName",
+                            title: "@T("Admin.Omni_Backoffice.ItemCategory.Fields.CategoryName")",
+                            width: 100,
+                            filterable: true,
+                            sortable: true
+                        }, {
+                            field: "Remarks",
+                            title: "@T("Admin.Omni_Backoffice.ItemCategory.Fields.Remarks")",
+                            width: 300,
+                            filterable: true,
+                            sortable: false
+                        }, 
+                            {
+                                command: [{
+                                    name: "edit",
+                                    text: "@T("Admin.Common.Edit")"
+                                }, {
+                                    name: "destroy",
+                                    text: "@T("Admin.Common.Delete")"
+                                }],
+                                width: 200,
+                                filterable: false
+                            }]
+                    });
+                });
+
+
+            </script>
+        </td>
+    </tr>
+</table>

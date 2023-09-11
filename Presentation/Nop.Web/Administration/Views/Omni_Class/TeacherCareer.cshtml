@@ -1,0 +1,231 @@
+﻿@model Nop.Admin.Models.Omni_Class.TeacherCareerModel
+@{
+    var gridPageSize = EngineContext.Current.Resolve<Nop.Core.Domain.Common.AdminAreaSettings>().GridPageSize;
+
+    //page title
+    ViewBag.Title = T("Admin.Omni_Class.TeacherCareer").Text;
+}
+@using (Html.BeginForm())
+{
+    <div class="section-header">
+        <div class="title">
+            <img src="@Url.Content("~/Administration/Content/images/ico-sales.png")" alt="" />
+            @T("Admin.Omni_Class.TeacherCareer")
+            <a href="javascript:history.go(-1)">(Back to teacher list)</a>
+        </div>
+    </div>
+    <table width="100%">
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.Teacher_Id):
+            </td>
+            <td class="adminData">
+                @Html.TextBoxFor(model => model.Teacher_Id, new { @readonly = "readonly" })
+            </td>
+        </tr>
+        <tr>
+            <td class="adminTitle">
+                @Html.Label("Teacher");
+            </td>
+            <td class="adminData">
+                @Html.TextBox("teachername", Model.Title + Model.FirstName + " " + Model.LastName, new { @readonly = "readonly" })
+            </td>
+        </tr>
+    </table>
+    <p>
+    </p>
+    <table class="adminContent">
+        <tr>
+            <td>
+                <div id="grid"></div>
+
+                <script>
+                    $(document).ready(function () {
+                        $("#grid").kendoGrid({
+                            dataSource: {
+                                type: "json",
+                                transport: {
+                                    read: {
+                                        url: "@Html.Raw(Url.Action("GetTeacherCareerList", "Omni_Class"))",
+                                        type: "POST",
+                                        dataType: "json"
+                                    },
+                                    create: {
+                                        url: "@Html.Raw(Url.Action("TeacherCareerInsert", "Omni_Class"))",
+                                        type: "POST",
+                                        dataType: "json"
+                                    },
+                                    update: {
+                                        url:"@Html.Raw(Url.Action("TeacherCareerUpdate", "Omni_Class"))",
+                                        type: "POST",
+                                        dataType: "json"
+                                    },
+                                    destroy: {
+                                        url: "@Html.Raw(Url.Action("TeacherCareerDelete", "Omni_Class"))",
+                                        type: "POST",
+                                        dataType: "json"
+                                    },
+                                    parameterMap: function(data, operation) {
+                                        if (operation != "read") {
+                                            var d = new Date(data.FromDate);
+                                            var d2 = new Date(data.ToDate);
+                                            data.FromDate = kendo.toString(new Date(d), "yyyy-MM-dd");
+                                            data.ToDate = kendo.toString(new Date(d2), "yyyy-MM-dd");
+ 
+                                            return data;
+                                        } else {
+                                            return {
+                                                Teacher_Id:  $('#@Html.FieldIdFor(model => model.Teacher_Id)').val()
+                                            };
+                                        }
+                                    }
+                                },
+                                autoSync:false,
+                                schema: {
+                                    data: "Data",
+                                    total: "Total",
+                                    errors: "Errors",
+                                    model: {
+                                        id: "Id",
+                                        fields: {
+                                            Teacher_Id : { editable: false, type: "number" ,defaultValue : "@Model.Teacher_Id"  },
+                                            CareerType : { editable: true, type: "string" },
+                                            FromDate : { editable: true, type: "date" },
+                                            ToDate : { editable: true, type: "date" },
+                                            Remarks : { editable: true, type: "string" },
+                                        }
+                                    }
+                                },
+                                requestEnd: function (e) {
+                                    if (e.type == "create" || e.type == "update") {
+                                        this.read();
+                                    }
+                                },
+                                error: function(e) {
+                                    display_kendoui_grid_error(e);
+                                    // Cancel the changes
+                                    this.cancelChanges();
+                                },
+                                pageSize: @(gridPageSize),
+                                serverPaging: true,
+                                serverFiltering: false,
+                                serverSorting: false
+                            },
+                            resizable : true,
+                            pageable: {
+                                refresh: true
+                            },
+
+                            toolbar: ["create"],
+
+                            editable: {
+                                confirmation: false,
+                                mode: "inline"
+                            },
+                            scrollable: false,
+                            columns: [{
+                                field: "Teacher_Id",
+                                title: "@T("Admin.Omni_Backoffice.TeacherCareer.Fields.Teacher_Id")",
+                                hidden:true
+
+                            }, {
+                                field: "CareerType",
+                                title: "@T("Admin.Omni_Backoffice.TeacherCareer.Fields.CareerType")",
+                                editor : CareerTypeDropDownEditor,
+                                template: '#=getCareerTypeName(CareerType) #',
+                                width: 60
+                            }, {
+                                field: "FromDate",
+                                title: "@T("Admin.Omni_Backoffice.TeacherCareer.Fields.FromDate")",
+                                format: "{0:dd/MM/yyyy}",
+                                width: 60
+                            }, {
+                                field: "ToDate",
+                                title: "@T("Admin.Omni_Backoffice.TeacherCareer.Fields.ToDate")",
+                                format: "{0:dd/MM/yyyy}",
+                                width: 60
+                            }, {
+                                field: "Remarks",
+                                title: "@T("Admin.Omni_Backoffice.TeacherCareer.Fields.Remarks")",
+                                width: 250
+                            }, {
+                                field: "Id",
+                                title: "@T("Admin.Omni_Backoffice.TeacherCareer.Fields.Id")",
+                                hidden : true
+                            }, {
+                                field: "Class_Id",
+                                title: "@T("Admin.Omni_Backoffice.TeacherCareer.Fields.Class_Id")",
+                                hidden : true
+                            },
+
+                            {
+
+                                command: [{
+                                    name: "edit",
+                                    text: "@T("Admin.Common.Edit")",
+                                }, {
+                                    name: "destroy",
+                                    text: "@T("Admin.Common.Delete")"
+                                }],
+                                width: 200,
+                                filterable:false
+
+                            }
+
+                            ]
+                        });
+                    });
+                </script>
+
+                <script type="text/javascript">
+
+                    $(document).ready(function () {
+
+                        $('#btnSearch').click(function () {
+                            var grid = $('#grid').data('kendoGrid');
+                            grid.dataSource.page(1); //new search. Set page size to 1
+                            grid.dataSource.read();
+                            return false;
+                        });
+
+                    });
+
+
+
+
+
+                    var allCareerTypeList = [
+
+        @for (int i = 0; i < Model.AvailableCareerType.Count; i++)
+                    {
+                        var item = Model.AvailableCareerType[i];
+                        <text> { Code: "@item.Value", Name: "@item.Text" } </text>
+                        if (i != Model.AvailableCareerType.Count - 1)
+                        { <text>,</text> }
+                    }
+                    ];
+
+                    function CareerTypeDropDownEditor(container, options) {
+                        $('<input required data-text-field="Name" data-value-field="Code" data-bind="value:'+options.field+'"/>')
+                            .appendTo(container)
+                            .kendoDropDownList({
+                                autoBind: false,
+                                dataSource: allCareerTypeList
+                            });
+                    }
+                    function getCareerTypeName(careertype)
+                    {
+                        for ( var i = 0; i < allCareerTypeList.length; i++)
+                        {
+                            if ( allCareerTypeList[i].Code == careertype)
+                                return allCareerTypeList[i].Name;
+                        }
+
+                        return careertype;
+                    }
+
+                </script>
+            </td>
+        </tr>
+    </table>
+}

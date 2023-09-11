@@ -1,0 +1,273 @@
+﻿@model Nop.Admin.Models.Omni_Order.OrderItemModel
+@{
+    var gridPageSize = 1000;// EngineContext.Current.Resolve<Nop.Core.Domain.Common.AdminAreaSettings>().GridPageSize;
+
+    //page title
+    ViewBag.Title = T("Admin.Omni_Order.ItemList").Text;
+
+}
+@using (Html.BeginForm())
+{
+    <div class="section-header">
+        <div class="title">
+            <img src="@Url.Content("~/Administration/Content/images/ico-sales.png")" alt="" />
+            @T("Admin.Omni_Order.ItemList")
+            @Html.ActionLink("(" + T("Admin.Omni_Order.OrderList.BackToList") + ")", "OrderList")
+        </div>
+        <div class="options"><input type="button" id="pdf-invoice-selected" class="k-button" value="@T("Admin.Omni_Order.PdfInvoice.Selected")" /></div>
+        
+    </div>
+    <table width="100%">
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.Order_Id):
+            </td>
+            <td class="adminData">
+                @Html.TextBoxFor(model => model.Order_Id, new { @readonly = "readonly" })
+            </td>
+        </tr>
+    </table>
+    <p>
+    </p>
+    <table class="adminContent">
+        <tr>
+            <td>
+                <div id="ordergroup-grid"></div>
+
+                <script>
+
+
+
+                    $(document).ready(function () {
+                        $("#ordergroup-grid").kendoGrid({
+                            dataSource: {
+                                type: "json",
+                                transport: {
+                                    read: {
+                                        url: "@Html.Raw(Url.Action("GetOrderItemList", "Omni_Order"))",
+                                        type: "POST",
+                                        dataType: "json"
+                                    },
+                                   
+                                    parameterMap: function(data, operation) {
+                                        if (operation != "read") {
+                                            return data;
+                                        } else {
+                                            //for some reasons only such "Filter" data be parsed
+                                            return  {Order_Id:  $('#@Html.FieldIdFor(model => model.Order_Id)').val()};
+                                        }
+                                    }
+                                },
+                                group: {
+                                    field: "Grade", aggregates: [
+                                       { field: "Qty", aggregate: "sum"},
+                                       { field: "Qty_Half", aggregate: "sum" },
+                                       { field: "Qty_Teacher", aggregate: "sum" }
+                                    ]
+                                },
+
+                                aggregate: [ { field: "Qty", aggregate: "sum"},
+                                       { field: "Qty_Half", aggregate: "sum" },
+                                       { field: "Qty_Teacher", aggregate: "sum" }
+                                ],
+                                autoSync : false,
+                                schema: {
+                                    data: "Data",
+                                    total: "Total",
+                                    errors: "Errors",
+                                    model: {
+                                        id: "Id",
+                                        fields: {
+                                            Order_Id: { editable: false, type: "number" },
+                                            ItemCode: { editable: false, type: "string" },
+                                            ItemName: { editable: false, type: "string" },
+                                            Term: { editable: false, type: "string" },
+                                            Grade: { editable: false, type: "string" },
+                                            Level: { editable: false, type: "string" },
+                                            Week: { editable: false, type: "number" },
+                                            Qty: { editable: false, type: "number" },
+                                            Qty_Half: { editable: false, type: "number" },
+                                            Qty_Teacher: { editable: false, type: "number" },
+                                            is_Half: { editable: false, type: "string" }
+                                        }
+                                    },
+                                },
+                                error: function(e) {
+                                    display_kendoui_grid_error(e);
+                                    // Cancel the changes
+                                    this.cancelChanges();
+                                },
+                                pageSize: @(gridPageSize),
+                                serverPaging: true
+                            },
+                            batch : false,
+                            scrollable: false,
+                            groupable: true,
+
+                            columns: [{
+                                field: "Order_Id",
+                                title: "@T("Admin.Omni_Backoffice.Item.Fields.Order_Id")",
+                                hidden : true
+                            }, {
+                                field: "Term",
+                                title: "@T("Admin.Omni_Backoffice.ItemSet.Fields.Term")",
+                                template: '#=getTermName(Term) #',
+                                width: 100,
+                                hidden : true
+                            }, {
+                                field: "Grade",
+                                title: "@T("Admin.Omni_Backoffice.ItemSet.Fields.Grade")",
+                                template: '#=getGradeName(Grade) #',
+                                width: 100,
+                            }, {
+                                field: "Level",
+                                title: "@T("Admin.Omni_Backoffice.ItemSet.Fields.Level")",
+                                template: '#=getLevelName(Level) #',
+                                width: 100,
+                            },{
+                                field: "ItemCode",
+                                title: "@T("Admin.Omni_Backoffice.Item.Fields.ItemCode")",
+                                width: 120,
+                            }, {
+                                field: "ItemName",
+                                title: "@T("Admin.Omni_Backoffice.Item.Fields.ItemName")",
+                                width: 200,
+                            }, {
+                                field: "Week",
+                                title: "@T("Admin.Omni_Backoffice.OrderbyItemSet.Fields.Week")",
+                                width: 100
+                            }, {
+                                field: "Qty",
+                                title: "@T("Admin.Omni_Backoffice.OrderbyItemSet.Fields.Qty")",
+                                width: 100,
+                                footerTemplate: "Sum: #=sum#",
+                                groupFooterTemplate: "Sum: #=sum#"
+                            }, {
+                                field: "Qty_Half",
+                                title: "@T("Admin.Omni_Backoffice.OrderbyItemSet.Fields.Qty_Half")",
+                                width: 100,
+                                footerTemplate: "Sum: #=sum#",
+                                groupFooterTemplate: "Sum: #=sum#"
+                            }, {
+                                field: "Qty_Teacher",
+                                title: "@T("Admin.Omni_Backoffice.OrderbyItemSet.Fields.Qty_Teacher")",
+                                width: 100,
+                                footerTemplate: "Sum: #=sum#",
+                                groupFooterTemplate: "Sum: #=sum#"
+                            }, {
+                                field: "Id",
+                                title: "@T("Admin.Omni_Backoffice.OrderbyItemSet.Fields.Id")",
+                                hidden : true
+                            }],
+                        });
+                    });
+                </script>
+                <script type="text/javascript">
+                    $(document).ready(function () {
+                        //"Print packaging slips (selected)" button
+                        $('#pdf-invoice-selected').click(function (e) {
+                            e.preventDefault();
+                            //redirect to required URL
+                            setLocation('@(Url.Action("PdfInvoice", "Omni_Order"))?orderId=' + $('#@Html.FieldIdFor(model => model.Order_Id)').val());
+                            return false;
+                        });
+
+
+
+                    });
+
+
+                    var allGradeList = [
+
+                @for (int i = 0; i < Model.AvailableGrades.Count; i++)
+                    {
+                        var grade = Model.AvailableGrades[i];
+                        <text>
+                        {
+                            Code: "@grade.Value",
+                            Name: "@grade.Text"
+                        }
+                        </text>
+                        if (i != Model.AvailableGrades.Count - 1)
+                        {
+                            <text>,</text>
+                        }
+                    }
+                    ];
+
+                    function getGradeName(grade)
+                    {
+                        for ( var i = 0; i < allGradeList.length; i++)
+                        {
+                            if ( allGradeList[i].Code == grade)
+                                return allGradeList[i].Name;
+                        }
+
+                        return grade;
+                    }
+
+                    var allLevelList = [
+
+                @for (int i = 0; i < Model.AvailableLevels.Count; i++)
+                    {
+                        var level = Model.AvailableLevels[i];
+                        <text>
+                        {
+                            Code: "@level.Value",
+                            Name: "@level.Text"
+                        }
+                        </text>
+                        if (i != Model.AvailableLevels.Count - 1)
+                        {
+                            <text>,</text>
+                        }
+                    }
+                    ];
+
+                    function getLevelName(level)
+                    {
+                        for ( var i = 0; i < allLevelList.length; i++)
+                        {
+                            if ( allLevelList[i].Code == level)
+                                return allLevelList[i].Name;
+                        }
+
+                        return level;
+                    }
+
+
+
+                    var allTermList = [
+
+                @for (int i = 0; i < Model.AvailableTerms.Count; i++)
+                    {
+                        var term = Model.AvailableTerms[i];
+                        <text>
+                        {
+                            Code: "@term.Value",
+                            Name: "@term.Text"
+                        }
+                        </text>
+                        if (i != Model.AvailableTerms.Count - 1)
+                        {
+                            <text>,</text>
+                        }
+                    }
+                    ];
+
+                    function getTermName(term)
+                    {
+                        for ( var i = 0; i < allTermList.length; i++)
+                        {
+                            if ( allTermList[i].Code == term)
+                                return allTermList[i].Name;
+                        }
+
+                        return term;
+                    }
+
+                </script>
+            </td>
+        </tr>
+    </table>
+}

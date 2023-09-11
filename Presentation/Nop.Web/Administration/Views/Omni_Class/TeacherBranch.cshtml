@@ -1,0 +1,263 @@
+﻿@model Nop.Admin.Models.Omni_Class.TeacherBranchModel
+@{
+    var gridPageSize = EngineContext.Current.Resolve<Nop.Core.Domain.Common.AdminAreaSettings>().GridPageSize;
+
+    //page title
+    ViewBag.Title = T("Admin.Omni_Class.TeacherBranch").Text;
+}
+@using (Html.BeginForm())
+{
+    <div class="section-header">
+        <div class="title">
+            <img src="@Url.Content("~/Administration/Content/images/ico-sales.png")" alt="" />
+            @T("Admin.Omni_Class.TeacherBranch")
+            <a href="javascript:history.go(-1)">(Back to teacher list)</a>
+        </div>
+    </div>
+    <table width="100%">
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.Teacher_Id):
+            </td>
+            <td class="adminData">
+                @Html.TextBoxFor(model => model.Teacher_Id, new { @readonly = "readonly" })
+            </td>
+        </tr>
+        <tr>
+            <td class="adminTitle">
+                @Html.Label("Teacher");
+            </td>
+            <td class="adminData">
+                @Html.TextBox("teachername", Model.Title + Model.FirstName + " " + Model.LastName, new { @readonly = "readonly" })
+            </td>
+        </tr>
+    </table>
+    <p>
+    </p>
+    <table class="adminContent">
+        <tr>
+            <td>
+                <div id="grid"></div>
+
+                @Html.Partial("_CampusPopup", Model.campuspopup);
+                    <script>
+                        $(document).ready(function () {
+                            $("#grid").kendoGrid({
+                                dataSource: {
+                                    type: "json",
+                                    transport: {
+                                        read: {
+                                            url: "@Html.Raw(Url.Action("GetTeacherBranchList", "Omni_Class"))",
+                                            type: "POST",
+                                            dataType: "json"
+                                        },
+                                        create: {
+                                            url: "@Html.Raw(Url.Action("TeacherBranchInsert", "Omni_Class"))",
+                                            type: "POST",
+                                            dataType: "json"
+                                        },
+                                        update: {
+                                            url:"@Html.Raw(Url.Action("TeacherBranchUpdate", "Omni_Class"))",
+                                            type: "POST",
+                                            dataType: "json"
+                                        },
+                                        destroy: {
+                                            url: "@Html.Raw(Url.Action("TeacherBranchDelete", "Omni_Class"))",
+                                            type: "POST",
+                                            dataType: "json"
+                                        },
+                                        parameterMap: function(data, operation) {
+                                            if (operation != "read") {
+
+                                                return data;
+                                            } else {
+                                                return {
+                                                    Teacher_Id:  $('#@Html.FieldIdFor(model => model.Teacher_Id)').val()
+                                                };
+                                            }
+                                        }
+                                    },
+                                    autoSync:false,
+                                    schema: {
+                                        data: "Data",
+                                        total: "Total",
+                                        errors: "Errors",
+                                        model: {
+                                            id: "Id",
+                                            fields: {
+                                                Teacher_Id : { editable: false, type: "number" ,defaultValue : "@Model.Teacher_Id"  },
+                                                Branch : { editable: true, type: "string" },
+                                                BranchPop : { editable: true, type: "string" }
+                                            }
+                                        }
+                                    },
+                                    requestEnd: function (e) {
+                                        if (e.type == "create" || e.type == "update") {
+                                            this.read();
+                                        }
+                                    },
+                                    error: function(e) {
+                                        display_kendoui_grid_error(e);
+                                        // Cancel the changes
+                                        this.cancelChanges();
+                                    },
+                                    pageSize: @(gridPageSize),
+                                    serverPaging: true,
+                                    serverFiltering: false,
+                                    serverSorting: false
+                                },
+                                resizable : true,
+                                selectable: "row",
+                                pageable: {
+                                    refresh: true
+                                },
+                                toolbar: ["create"],
+                                editable: {
+                                    confirmation: false,
+                                    mode: "inline"
+                                },
+                                scrollable: false,
+                                columns: [{
+                                    field: "Teacher_Id",
+                                    title: "@T("Admin.Omni_Backoffice.TeacherBranch.Fields.Teacher_Id")",
+                                    hidden:true
+
+                                }, {
+                                    field: "Branch",
+                                    title: "@T("Admin.Omni_Backoffice.TeacherBranch.Fields.Branch")",
+                                    editor : '<p id="branchtext" onload="setBranchName()">Branch <p>',
+                                    template: '#=getBranchName(Branch) #',
+                                    width: 60
+                                }, {
+                                    field: "BranchPop",
+                                    title: "@T("Admin.Omni_Backoffice.TeacherBranch.Fields.Branch")",
+                                    editor : '<a onclick=campus_popup("#=Branch#") href="javascript:void(0);" > Click here to edit branch </a>',
+                                    template: '...',
+                                    width: 60
+                                }, {
+                                    field: "Id",
+                                    title: "@T("Admin.Omni_Backoffice.TeacherCareer.Fields.Id")",
+                                    hidden : true
+                                },
+
+                                {
+
+                                    command: [{
+                                        name: "edit",
+                                        text: "@T("Admin.Common.Edit")",
+
+                                    }, {
+                                        name: "destroy",
+                                        text: "@T("Admin.Common.Delete")"
+
+                                    }],
+                                    width: 200,
+                                    filterable:false
+
+                                }
+
+                                ]
+                            });
+                        });
+                    </script>
+
+                    <script type="text/javascript">
+
+
+                        $(document).ready(function () {
+
+                            $('#btnSearch').click(function () {
+                                var grid = $('#grid').data('kendoGrid');
+                                grid.dataSource.page(1); //new search. Set page size to 1
+                                grid.dataSource.read();
+                                return false;
+                            });
+
+                            /*  popup start  */
+
+                            var window = $("#window_campuspopup");
+                            if (!window.data("kendoWindow")) {
+                                window.kendoWindow({
+                                    width: "500px",
+                                    actions: ["Close"],
+                                    title: "Branch",
+                                    visible: false,
+                                    close: function () {
+                                        // set value on the current grid data
+
+                                        var grid = $("#grid").data("kendoGrid");
+                                        var selectedItem = grid.dataItem(grid.select());
+                                        //alert(selectedItem.BranchPop);
+                                        if ( document.getElementById('Campus_Prefix').value != "")
+                                        {
+                                            selectedItem.Branch = document.getElementById('Campus_Prefix').value;
+                                            $("#branchtext").text(getBranchName( document.getElementById('Campus_Prefix').value ));
+                                        }
+                                            
+                                    }
+                                });
+
+
+                            }
+
+                            $("#window_campuspopup").data("kendoWindow").close();
+
+                            /* popup end */
+
+
+
+                        });
+
+
+                        function setBranchName(){
+                            var grid = $("#grid").data("kendoGrid");
+                            var selectedItem = grid.dataItem(grid.select());
+
+                            if ( selectedItem.Branch != "")
+                            {
+                                $("#branchtext").text(getBranchName( selectedItem.Branch ));
+                            }
+                        }
+
+
+                        function campus_popup(campus_prefix) {
+                            $("#window_campuspopup").data("kendoWindow").open();
+                            document.getElementById('Campus_Prefix').value = "";
+                        }
+
+
+
+                        var allBranchList = [
+
+            @for (int i = 0; i < Model.AvailableBranch.Count; i++)
+                    {
+                        var item = Model.AvailableBranch[i];
+                        <text> { Code: "@item.Value", Name: "@item.Text" } </text>
+                        if (i != Model.AvailableBranch.Count - 1)
+                        { <text>,</text> }
+                    }
+                        ];
+
+                        function getBranchName(branch)
+                        {
+                            for ( var i = 0; i < allBranchList.length; i++)
+                            {
+                                if ( allBranchList[i].Code == branch)
+                                    return allBranchList[i].Name;
+                            }
+
+                            return branch;
+                        }
+
+                        function getCheckYN(check)
+                        {
+                            if ( check )
+                                return "Y";
+                            else return "N";
+                        }
+
+                    </script>
+</td>
+        </tr>
+    </table>
+}

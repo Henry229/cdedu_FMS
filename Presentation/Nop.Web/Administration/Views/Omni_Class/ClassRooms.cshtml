@@ -1,0 +1,242 @@
+﻿@model Nop.Admin.Models.Omni_Class.ClassRoomModel
+@{
+    var gridPageSize = EngineContext.Current.Resolve<Nop.Core.Domain.Common.AdminAreaSettings>().GridPageSize;
+
+    //page title
+    ViewBag.Title = T("Admin.Omni_Class.ClassRooms").Text;
+}
+@using (Html.BeginForm())
+{
+    <div class="section-header">
+        <div class="title">
+            <img src="@Url.Content("~/Administration/Content/images/ico-sales.png")" alt="" />
+            @T("Admin.Omni_Class.ClassRooms")
+        </div>
+
+    </div>
+    <table>
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.AvailableBranch):
+            </td>
+            <td class="adminData">
+                @if (Model.isadmin)
+                {
+                    @Html.DropDownListFor(model => model.Branch, Model.AvailableBranch, new { @class = "adminInput" })
+                }
+                else
+                {
+                    @Html.DropDownListFor(model => model.Branch, Model.AvailableBranch, new { @class = "adminInput", @disabled = "disabled" })
+                }
+            </td>
+        </tr>
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.Title):
+            </td>
+            <td class="adminData">
+                @Html.EditorFor(model => model.Title, new { @class = "adminInput" })
+            </td>
+        </tr>
+
+        <tr>
+            <td colspan="2">
+                <input type="button" id="btnSearch" class="k-button" value="@T("Admin.Common.Search")" />
+            </td>
+        </tr>
+
+    </table>
+    <p>
+    </p>
+    <table class="adminContent">
+        @Html.ValidationSummary()
+        <tr>
+            <td>
+                <div id="grid"></div>
+
+                <script>
+    kendo.culture("en-AU");
+    $(document).ready(function () {
+        $("#grid").kendoGrid({
+            dataSource: {
+                type: "json",
+                transport: {
+                    read: {
+                        url: "@Html.Raw(Url.Action("GetClassRoomList", "Omni_Class"))",
+                        type: "POST",
+                        dataType: "json"
+                    },
+                    create: {
+                        url: "@Html.Raw(Url.Action("ClassRoomInsert", "Omni_Class"))",
+                        type: "POST",
+                        dataType: "json"
+                    },
+                    update: {
+                        url:"@Html.Raw(Url.Action("ClassRoomUpdate", "Omni_Class"))",
+                        type: "POST",
+                        dataType: "json"
+                    },
+                    destroy: {
+                        url: "@Html.Raw(Url.Action("ClassRoomDelete", "Omni_Class"))",
+                    type: "POST",
+                    dataType: "json"
+                    },
+
+                    parameterMap: function (data, operation) {
+                        if (operation != "read") {
+                            return data;
+                        } else {
+                            return {
+                                Branch: $('#@Html.FieldIdFor(model => model.Branch)').val(),
+                                Title: $('#@Html.FieldIdFor(model => model.Title)').val()
+                        };
+                    }
+                }
+            },
+            autoSync: false,
+            schema: {
+                data: "Data",
+                total: "Total",
+                errors: "Errors",
+                model: {
+                    id: "Id",
+                    fields: {
+                        @if(Model.isadmin)
+                        {
+                           <text> Branch: { editable: true, type: "string" },</text>
+                        }
+                        else
+                        {
+                           <text> Branch: { editable: false, type: "string", defaultValue:"@Model.Branch" },</text>
+                        }
+                        Title : {editable: true, type: "string" },
+                        Remarks: { editable: true, type: "string" },
+                        Id: { editable: false, type: "number" }
+                    }
+                }
+            },
+            requestEnd: function (e) {
+                if (e.type == "create" || e.type == "update") {
+                    this.read();
+                }
+            },
+            error: function (e) {
+                display_kendoui_grid_error(e);
+                // Cancel the changes
+                this.cancelChanges();
+            },
+            pageSize: 10000,
+            serverPaging: false,
+            serverFiltering: false,
+            serverSorting: false
+        },
+            resizable: true,
+        toolbar: ["create"],
+        editable: {
+            confirmation: false,
+            //mode: "popup"
+            mode: "inline"
+        },
+        scrollable: false,
+        columns: [
+        {
+            field: "Id",
+            title: "ID",
+            hidden: true,
+            filterable: false
+        }, {
+            field: "Branch",
+            title: "@T("Admin.Omni_Backoffice.ClassRoom.Fields.Branch")",
+            editor: SetBranchDropDownEditor,
+            template: '#=getBranchName(Branch) #',
+            width: 100,
+            filterable: false
+        },{
+            field: "Title",
+            title: "@T("Admin.Omni_Backoffice.ClassRoom.Fields.Title")",
+            width: 50,
+            filterable: false
+
+        }, {
+            field: "Remarks",
+            title: "@T("Admin.Omni_Backoffice.ClassRoom.Fields.Remarks")",
+            width: 200,
+            filterable: false
+
+        }, {
+
+            command: [{
+                name: "edit",
+                text: "@T("Admin.Common.Edit")",
+            }, {
+                name: "destroy",
+                text: "@T("Admin.Common.Delete")"
+            }],
+            width: 200,
+            filterable:false
+
+        }]
+    });
+    });
+                </script>
+
+                <script type="text/javascript">
+
+                    $(document).ready(function () {
+
+                        $('#btnSearch').click(function () {
+                            var grid = $('#grid').data('kendoGrid');
+                            grid.dataSource.page(1); //new search. Set page size to 1
+                            grid.dataSource.read();
+
+                        });
+
+
+
+                    });
+
+
+
+
+                    var allBranchList = [
+
+                    @for (int i = 0; i < Model.AvailableBranch.Count; i++)
+                    {
+                        var branch = Model.AvailableBranch[i];
+                        <text> { Code: "@branch.Value", Name: "@branch.Text" }  </text>
+                        if (i != Model.AvailableBranch.Count - 1)
+                        {
+                            <text>,</text>
+                        }
+                    }
+                    ];
+
+                    function SetBranchDropDownEditor(container, options) {
+                        $('<input required data-text-field="Name" data-value-field="Code" data-bind="value:'+options.field+'"/>')
+                            .appendTo(container)
+                            .kendoDropDownList({
+                                autoBind: false,
+                                dataSource: allBranchList
+                            });
+                    }
+                    function getBranchName(branch)
+                    {
+                        for ( var i = 0; i < allBranchList.length; i++)
+                        {
+                            if ( allBranchList[i].Code == branch)
+                                return allBranchList[i].Name;
+                        }
+
+                        return branch;
+                    }
+
+
+                   
+
+
+
+                </script>
+            </td>
+        </tr>
+    </table>
+}

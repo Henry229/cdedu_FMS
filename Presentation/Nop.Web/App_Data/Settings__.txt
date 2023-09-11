@@ -1,0 +1,2 @@
+DataProvider: sqlserver
+DataConnectionString: Data Source=csonlineschool.com.au;Initial Catalog=csfms_qld;Integrated Security=False;Persist Security Info=False;User ID=csfms_qld_admin;Password=kP49RsT27w;MultipleActiveResultSets=True

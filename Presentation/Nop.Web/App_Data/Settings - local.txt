@@ -1,0 +1,5 @@
+DataProvider: sqlserver
+DataConnectionString: Data Source=localhost;Initial Catalog=nopcommerce;Integrated Security=True;
+
+DataProvider: sqlserver
+DataConnectionString: Data Source=localhost;Initial Catalog=csfms;Integrated Security=true;Persist Security Info=true;User ID=sa;Password=guswjd23;MultipleActiveResultSets=True

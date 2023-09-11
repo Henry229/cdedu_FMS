@@ -1,0 +1,186 @@
+﻿@model Nop.Admin.Models.Omni_Class.ClassRoomModel
+
+<div id="window_classroompopup">
+    <table width="100%">
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.AvailablePopupBranch):
+            </td>
+            <td class="adminData">
+                @Html.DropDownListFor(model => model.PopupBranch , Model.AvailablePopupBranch, new { @class = "adminInput" })
+            </td>
+        </tr>
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.Title):
+            </td>
+            <td class="adminData">
+                @Html.EditorFor(model => model.Title, new { @class = "adminInput" })
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2">
+                <input type="button" id="btnSearchClassroomPopup" class="k-button" value="@T("Admin.Common.Search")" />
+            </td>
+        </tr>
+    </table>
+    <p>
+    </p>
+
+    <table>
+        <tr>
+            <td>
+                <div id="classroompopup-grid"></div>
+
+                <script>
+                    kendo.culture("en-AU");
+                    var param_prefix = "";
+                    $(document).ready(function () {
+                        $("#classroompopup-grid").kendoGrid({
+                            dataSource: {
+                                type: "json",
+                                transport: {
+                                    read: {
+                                        url: "@Html.Raw(Url.Action("GetClassRoomList", "Omni_Class"))",
+                                        type: "POST",
+                                        dataType: "json"
+                                    },
+                                    parameterMap: function (data, operation) {
+                                        if (operation != "read") {
+                                            var d = new Date(data.reg_date);
+                                            data.reg_date = kendo.toString(new Date(d), "yyyy-MM-dd");
+                                            return data;
+                                        } else {
+
+                                        return {
+                                                PopupBranch: $('#@Html.FieldIdFor(model => model.PopupBranch)').val(),
+                                                Title: $('#@Html.FieldIdFor(model => model.Title)').val()
+                                            }
+
+                                        }
+                                    }
+                                },
+                                autoSync: false,
+                                schema: {
+                                    data: "Data",
+                                    total: "Total",
+                                    errors: "Errors",
+                                    model: {
+                                        fields: {
+                                            Branch: { editable: false, type: "string" },
+                                            Title: { editable: false, type: "string" },
+                                            Roompop_Id: { editable: false, type: "string" }
+                                        }
+                                    }
+                                },
+                                requestEnd: function (e) {
+                                    if (e.type == "create" || e.type == "update") {
+                                        this.read();
+                                    }
+                                },
+                                error: function (e) {
+                                    display_kendoui_grid_error(e);
+                                    // Cancel the changes
+                                    this.cancelChanges();
+                                },
+                                pageSize: 100000,
+                                serverPaging: true,
+                                serverFiltering: true,
+                                serverSorting: true
+                            },
+                            pageable: {
+                                refresh: true
+                            },
+                            sortable: false,
+                            scrollable: false,
+                            columns: [{
+
+                                field: "select",
+                                title: "Click",
+                                width: 100,
+                                template: '<a onclick=click_select_classroom("#=Roompop_Id#","#=Branch#") href="javascript:void(0);"> Select </a>',
+                                editor: "<label></label>",
+                                editable: false,
+                                filterable: false
+                            },{
+                                field: "Branch",
+                                title: "@T("Admin.Omni_Backoffice.Classroom.Fields.branch")",
+                                editor: SetPopupBranchDropDownEditor,
+                                template: '#=getPopupBranchName(Branch) #',
+                                width: 100,
+                                filterable: false,
+                                sortable: false
+                            }, {
+                                field: "Title",
+                                title: "@T("Admin.Omni_Backoffice.Classroom.Fields.title")",
+                                width: 200,
+                                filterable: false,
+                                sortable: false
+                            }]
+                        });
+                    });
+
+                </script>
+
+                <script type="text/javascript">
+
+                    $('#btnSearchClassroomPopup').click(function () {
+                        var popupgrid = $('#classroompopup-grid').data('kendoGrid');
+                        //alert(popupgrid);
+                        popupgrid.dataSource.page(1); //new search. Set page size to 1
+                        popupgrid.dataSource.read();
+
+                        return false;
+                    });
+
+
+                    function click_select_classroom(roompop_id, branch) {
+                        //alert(roompop_id);
+                        document.getElementById('Classroom_Id').value = roompop_id;
+                        document.getElementById('Branch').value = branch;
+                        //alert(document.getElementById('Roompop_Id').value);
+                        $("#window_classroompopup").data("kendoWindow").close();
+                    }
+
+                    var allPopupBranchList = [
+
+                    @for (int i = 0; i < Model.AvailablePopupBranch.Count; i++)
+                    {
+                        var popupbranch = Model.AvailablePopupBranch[i];
+                        <text> { Code: "@popupbranch.Value", Name: "@popupbranch.Text" }  </text>
+                        if (i != Model.AvailablePopupBranch.Count - 1)
+                        {
+                            <text>,</text>
+                        }
+                    }
+                    ];
+
+                    function SetPopupBranchDropDownEditor(container, options) {
+                        $('<input required data-text-field="Name" data-value-field="Code" data-bind="value:' + options.field + '"/>')
+                            .appendTo(container)
+                            .kendoDropDownList({
+                                autoBind: false,
+                                dataSource: allPopupBranchList
+                            });
+                    }
+
+                    function getPopupBranchName(popupbranch) {
+                        
+                        for (var i = 0; i < allPopupBranchList.length; i++) {
+                            if (allPopupBranchList[i].Code == popupbranch)
+                                return allPopupBranchList[i].Name;
+                        }
+
+                        return popupbranch;
+                    }
+
+                </script>
+
+
+
+
+
+            </td>
+        </tr>
+    </table>
+</div>

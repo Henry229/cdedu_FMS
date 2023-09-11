@@ -1,0 +1,231 @@
+﻿@using Nop.Services.Omni_Backoffice
+@{
+    var gridPageSize = EngineContext.Current.Resolve<Nop.Core.Domain.Common.AdminAreaSettings>().GridPageSize;
+
+    //page title
+    ViewBag.Title = T("Admin.Omni_Basis.CodeMaster").Text;
+}
+<div class="section-header">
+    <div class="title">
+        <img src="@Url.Content("~/Administration/Content/images/ico-configuration.png")" alt="" />
+        @T("Admin.Omni_Basis.CodeMaster")
+    </div>
+</div>
+<table class="adminContent">
+    <tr>
+        <td>
+            @T("Admin.Omni_Basis.CodeMaster.Description")
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <div id="settings-grid"></div>
+
+            <script>
+    $(document).ready(function () {
+        $("#settings-grid").kendoGrid({
+            dataSource: {
+                type: "json",
+                transport: {
+                    read: {
+                        url: "@Html.Raw(Url.Action("CodeMaster", "Omni_Basis"))",
+                        type: "POST",
+                        dataType: "json",
+                        contentType: "application/json"
+                    },
+                    create: {
+                        url: "@Html.Raw(Url.Action("CodeMasterInsert", "Omni_Basis"))",
+                        type: "POST",
+                        dataType: "json"
+                    },
+                    update: {
+                        url:"@Html.Raw(Url.Action("CodeMasterUpdate", "Omni_Basis"))",
+                        type: "POST",
+                        dataType: "json"
+                    },
+                    destroy: {
+                        url: "@Html.Raw(Url.Action("CodeMasterDelete", "Omni_Basis"))",
+                        type: "POST",
+                        dataType: "json"
+                    },
+                    parameterMap: function(data, operation) {
+                        if (operation != "read") {
+                            return data;
+                        } else {
+                            //for some reasons only such "Filter" data be parsed
+                            return JSON.stringify(data);
+                        }
+                    }
+                },
+                schema: {
+                    data: "Data",
+                    total: "Total",
+                    errors: "Errors",
+                    model: {
+                        id: "Id",
+                        fields: {
+                            CodeType: { editable: true, type: "string" },
+                            TypeName: { editable: true, type: "string" },
+                            DetailCode: { editable: true, type: "string" },
+                            DetailName: { editable: true, type: "string" },
+                            String_01: { editable: true, type: "string" },
+                            String_02: { editable: true, type: "string" },
+                            String_03: { editable: true, type: "string" },
+                            Val_01: { editable: true, type: "number" },
+                            Val_02: { editable: true, type: "number" },
+                            Val_03: { editable: true, type: "number" },
+                            SortOrder: { editable: true, type: "number" },
+                            YN_Use: { editable: true, type: "string" }
+                        }
+                    }
+                },
+                requestEnd: function (e) {
+                    if (e.type == "create" || e.type == "update") {
+                        this.read();
+                    }
+                },
+                error: function (e) {
+                    display_kendoui_grid_error(e);
+                    // Cancel the changes
+                    this.cancelChanges();
+                },
+                pageSize: @(gridPageSize),
+                serverPaging: true,
+                serverFiltering: true,
+                serverSorting: true
+            },
+            pageable: {
+                refresh: true
+            },
+            sortable: true,
+            toolbar: ["create"],
+            editable: {
+                confirmation: false,
+                mode: "inline"
+            },
+            filterable: {
+                extra: false,
+                operators: {
+                    string: {
+                        contains: "Contains",
+                        eq: "Is equal to"
+                    }
+                }
+            },
+            scrollable: false,
+            columns: [{
+                field: "CodeType",
+                title: "@T("Admin.Omni_Backoffice.CodeMaster.Fields.CodeType")",
+                width: 80,
+                filterable: true,
+                sortable: false
+            }, {
+                field: "TypeName",
+                title: "@T("Admin.Omni_Backoffice.CodeMaster.Fields.TypeName")",
+                width: 100,
+                filterable: true,
+                sortable: false
+            }, {
+                field: "DetailCode",
+                title: "@T("Admin.Omni_Backoffice.CodeMaster.Fields.DetailCode")",
+                width: 80,
+                filterable: true,
+                sortable: false
+            }, {
+                field: "DetailName",
+                title: "@T("Admin.Omni_Backoffice.CodeMaster.Fields.DetailName")",
+                width: 150,
+                filterable: true,
+                sortable: false
+            }, {
+                field: "String_01",
+                title: "@T("Admin.Omni_Backoffice.CodeMaster.Fields.String_01")",
+                width: 150,
+                filterable: true,
+                sortable: false
+            },{
+                field: "String_02",
+                title: "@T("Admin.Omni_Backoffice.CodeMaster.Fields.String_02")",
+                width: 150,
+                filterable: true,
+                sortable: false
+            }, {
+                field: "String_03",
+                title: "@T("Admin.Omni_Backoffice.CodeMaster.Fields.String_03")",
+                width: 150,
+                filterable: true,
+                sortable: false
+            },{
+                field: "Val_01",
+                title: "@T("Admin.Omni_Backoffice.CodeMaster.Fields.Val_01")",
+                width: 50,
+                filterable: true,
+                sortable: false
+            },{
+                field: "Val_02",
+                title: "@T("Admin.Omni_Backoffice.CodeMaster.Fields.Val_02")",
+                width: 50,
+                filterable: true,
+                sortable: false
+            },{
+                field: "Val_03",
+                title: "@T("Admin.Omni_Backoffice.CodeMaster.Fields.Val_03")",
+                width: 50,
+                filterable: true,
+                sortable: false
+            },{
+                field: "SortOrder",
+                title: "@T("Admin.Omni_Backoffice.CodeMaster.Fields.SortOrder")",
+                width: 50,
+                filterable: true,
+                sortable: false
+            },{
+                field: "YN_Use",
+                title: "@T("Admin.Omni_Backoffice.CodeMaster.Fields.YN_Use")",
+                editor: YNDropDownEditor, 
+                //template: "#:Store#",
+                width: 50,
+                filterable: true,
+                sortable: false
+            },
+                {
+                    command: [{
+                        name: "edit",
+                        text: "@T("Admin.Common.Edit")"
+                    }, {
+                        name: "destroy",
+                        text: "@T("Admin.Common.Delete")"
+                    }],
+                    width: 200,
+                    filterable: false
+                }]
+        });
+    });
+
+//DropDown YN
+                var itemYN = [
+                    {  Id : "",
+                        Name : ""
+                    },
+                    {  Id : "Y",
+                    Name : "YES"
+                    },
+                    {
+                        Id : "N",
+                        Name : "NO"
+                    }];
+ 
+
+
+function YNDropDownEditor(container, options) {
+    $('<input required data-text-field="Name" data-value-field="Id" data-bind="value:YN_Use"/>')
+        .appendTo(container)
+        .kendoDropDownList({
+            autoBind: false,
+            dataSource: itemYN
+        });
+}
+</script>
+        </td>
+    </tr>
+</table>

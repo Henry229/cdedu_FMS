@@ -1,0 +1,41 @@
+﻿@model NewsItemListModel
+@using Nop.Web.Extensions;
+@using Nop.Web.Models.News;
+@{
+    Layout = "~/Views/Shared/_ColumnsOne.cshtml";
+
+    //title
+    Html.AddTitleParts(T("PageTitle.NewsArchive").Text);
+
+}
+<div class="page news-list-page">
+    <div class="page-title">
+        <h1>@T("News")</h1>
+    </div>
+    <div class="page-body">
+        @Html.Widget("mobile_newslist_page_before_items")
+        <div class="news-items">
+
+                <div class="item">
+                    <a class="news-title" href="@Url.RouteUrl("NewsItem", new { SeName = "" })">
+                        "item.Title"
+                    </a> <span class="news-date">
+                        -
+                        "item.CreatedOn"
+                    </span>
+                    <div class="news-details">
+                        "item.Short"
+                    </div>
+                    <a href="@Url.RouteUrl("NewsItem", new { SeName = "" })" class="read-more">
+                        @T("News.MoreInfo")
+                    </a>
+                    @Html.Widget("mobile_newslist_page_inside_item")
+                </div>
+
+        </div>
+        <div class="pager">
+
+        </div>
+        @Html.Widget("mobile_newslist_page_after_items")
+    </div>
+</div>
